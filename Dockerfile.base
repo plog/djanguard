@@ -1,0 +1,16 @@
+FROM python:3.12
+
+WORKDIR /app
+RUN mkdir -p /app/logs && \
+    chown -R root:root /app/logs && \
+    chmod 755 /app/logs
+COPY ./requirements.txt /tmp/requirements.txt
+COPY ./config/.bashrc /root/.bashrc
+
+RUN apt-get update && apt-get upgrade -y && apt-get install -y vim procps net-tools cron curl nginx logrotate
+RUN pip install --upgrade pip
+RUN pip install playwright
+RUN playwright install --with-deps
+RUN pip install -r /tmp/requirements.txt --no-cache-dir
+
+CMD ["python"]

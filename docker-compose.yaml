@@ -1,0 +1,73 @@
+networks:
+  default:
+    external: true
+    name: scoobydoo
+
+services:
+
+  djanguard_postgresql:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: djanguard
+      POSTGRES_DB: djanguard
+    networks:
+      - default
+    volumes:
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
+      - pgdatadjanguard:/var/lib/postgresql/data
+    ports:
+      - "${DB_EXTERNAL_PORT}:5432" 
+
+  djanguard_redis:
+    image: redis:latest
+    networks:
+      - default
+
+  djanguard_celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: "/app/superstart.py"
+    volumes:
+      - .:/app
+      - django_djanguard_static:/django_djanguard_static
+    depends_on:
+      - djanguard_redis
+      - djanguard_postgresql
+    environment:
+      SERVICE_ROLE: celery
+      TZ: "Asia/Singapore"
+    networks:
+      - default
+
+  djanguard_django:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: 'plog/djanguard_django:0.1'
+    restart: unless-stopped
+    volumes:
+      - .:/app:rw
+      - django_djanguard_static:/django_djanguard_static
+      - ./config/djanguard_nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+    command: "/app/superstart.py"
+    environment:
+      SERVICE_ROLE: django
+      TZ: "Asia/Singapore"
+      VIRTUAL_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: plog@plog.net
+      VIRTUAL_PORT: ${MAIN_PROXY_PORT}
+    depends_on:
+      - djanguard_postgresql
+    networks:
+      - default
+    ports:
+      - "${MAIN_PROXY_PORT}:80"
+
+volumes:
+  pgdatadjanguard:
+  django_djanguard_static:
