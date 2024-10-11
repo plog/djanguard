@@ -1,0 +1,63 @@
+{% extends "website_base.html" %}
+{% load static %}
+{% load i18n %}
+{% block content %}
+
+<div class="row">
+    <div class="col-md-10">
+        <h1 class="display-4 mb-4">{% trans "Privacy Policy" %}</h1>
+        <p class="lead">{% trans "Effective Date: January 1, 2024" %}</p>
+
+        <h2 class="mt-5">{% trans "Introduction" %}</h2>
+        <p>
+            {% trans "We are committed to protecting your privacy and ensuring responsible use of your data while using our Proctoring Extension. This policy explains what data we collect, how we use it, and how we ensure it is protected." %}
+        </p>
+
+        <h2 class="mt-4">{% trans "Data We Collect" %}</h2>
+        <p>
+            {% trans "Our extension collects the following information during online exams to ensure exam integrity:" %}
+        </p>
+        <ul>
+            <li>{% trans "Webcam access to monitor the student's environment." %}</li>
+            <li>{% trans "Screen sharing to ensure only authorized content is accessed." %}</li>
+            <li>{% trans "Geolocation to verify compliance with exam location requirements." %}</li>
+            <li>{% trans "Tab activity to detect navigation to unauthorized websites." %}</li>
+            <li>{% trans "Clipboard access to monitor copy-paste actions." %}</li>
+            <li>{% trans "Display information to prevent multi-screen cheating." %}</li>
+        </ul>
+
+        <h2 class="mt-4">{% trans "How We Use Your Data" %}</h2>
+        <p>
+            {% trans "The data we collect is used exclusively to monitor and ensure the integrity of online exams. It is not shared with third parties or used for any other purpose." %}
+        </p>
+
+        <h2 class="mt-4">{% trans "Data Security" %}</h2>
+        <p>
+            {% trans "We use industry-standard encryption (HTTPS) to securely transmit data. We also implement strict access controls to protect your data from unauthorized access or disclosure." %}
+        </p>
+
+        <h2 class="mt-4">{% trans "Data Retention" %}</h2>
+        <p>
+            {% trans "We retain the data only for the duration of the exam and any necessary review. After the review, all data is permanently deleted." %}
+        </p>
+
+        <h2 class="mt-4">{% trans "Your Rights" %}</h2>
+        <p>
+            {% trans "You have the right to access the data collected during your exam and request its deletion once the exam is completed. To exercise these rights, please contact the exam administrator." %}
+        </p>
+
+        <h2 class="mt-4">{% trans "Changes to This Policy" %}</h2>
+        <p>
+            {% trans "We reserve the right to update this Privacy Policy. Any changes will be communicated to users and will take effect immediately." %}
+        </p>
+
+        <h2 class="mt-4">{% trans "Contact Us" %}</h2>
+        <p>
+            {% trans "If you have any questions or concerns about this Privacy Policy, please" %} <a href="{% url 'contact' %}">{%trans "contact us" %}</a>
+        </p>
+
+        <p class="text-muted mt-5">{% trans "&copy; 2024 Proctoring Extension. All rights reserved." %}</p>
+    </div>
+</div>
+
+{% endblock %}

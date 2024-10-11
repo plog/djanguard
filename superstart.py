@@ -46,7 +46,6 @@ GUNICORN_CMD = ['gunicorn','--workers', '2','--bind', '127.0.0.1:5000',f'{APP_NA
 
 processes = {}
 
-
 def run_command(command):
     """Run a shell command and log its output."""
     try:

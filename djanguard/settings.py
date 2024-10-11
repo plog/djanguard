@@ -2,8 +2,12 @@ from pathlib import Path
 from decouple import config
 import os
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-ADMIN_URL  = config('ADMIN_URL')
+BASE_DIR              = Path(__file__).resolve().parent.parent
+ADMIN_URL             = config('ADMIN_URL')
+LOGIN_REDIRECT_URL    = '/sensor/'
+LOGOUT_REDIRECT_URL   = LOGIN_REDIRECT_URL
+LOGIN_URL             = f'/accounts/login/?next={LOGIN_REDIRECT_URL}'
+
 SECRET_KEY = 'django-insecure-z*ypnwid#cw-(*u7w4b684p$!&f9h83=j1&8v2tidz6-9+7q59'
 DEBUG = True
 
@@ -29,9 +33,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'django_celery_results',
-    'monitor',
     'rest_framework',
     'corsheaders',    
+    'monitor',
+    'website',
 ]
 
 MIDDLEWARE = [
@@ -46,11 +51,9 @@ MIDDLEWARE = [
 ]
 
 ALLOWED_HOSTS = [
-    '127.0.0.1:8010',
-    '127.0.0.1',
+    'djanguard.bali.plog.net',
     '172.18.0.11',
     '141.95.99.27',
-    f'10.11.12.100:{config('MAIN_PROXY_PORT')}',
     '10.11.12.100',
     'localhost'
 ]

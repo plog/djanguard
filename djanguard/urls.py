@@ -9,5 +9,6 @@ urlpatterns = [
 
     path(f'{settings.ADMIN_URL}/' , admin.site.urls),
     path('', include('monitor.urls')), 
+    path('', include('website.urls')),
 ]
  

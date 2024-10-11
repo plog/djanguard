@@ -51,7 +51,7 @@ services:
     volumes:
       - .:/app:rw
       - django_djanguard_static:/django_djanguard_static
-      - ./config/djanguard_nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./config/default_nginx.conf:/etc/nginx/conf.d/default.conf
       - ./config/nginx.conf:/etc/nginx/nginx.conf
     command: "/app/superstart.py"
     environment:
@@ -60,13 +60,10 @@ services:
       VIRTUAL_HOST: ${LETSENCRYPT_HOST}
       LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
       LETSENCRYPT_EMAIL: plog@plog.net
-      VIRTUAL_PORT: ${MAIN_PROXY_PORT}
     depends_on:
       - djanguard_postgresql
     networks:
       - default
-    ports:
-      - "${MAIN_PROXY_PORT}:80"
 
 volumes:
   pgdatadjanguard:

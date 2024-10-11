@@ -1,0 +1,290 @@
+{% extends "monitor_base.html" %}
+{% load static %}
+{% load form_tags %}
+{% block content %}
+
+
+<h1 class="pl-3">Edit Sensor</h1>
+<!-- Section 1: Form to update main Sensor properties -->
+<div class="row mb-4 mx-3 box p-3">
+    <div class="col-7 align-top">
+        <form id="sensor-edit-form" class="mb-5">
+            <div class="row">
+                <div class="col">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name:</label>
+                        <input type="text" id="name" name="name" class="form-control  form-control-sm" value="{{ sensor.name }}" required>
+                    </div>                    
+                </div>
+                <div class="col-5">
+                    <div class="mb-3">
+                        <label for="frequency" class="form-label">Frequency:</label>
+                        <input type="number" id="frequency" name="frequency" class="form-control  form-control-sm" value="{{ sensor.frequency }}" required>
+                    </div>                    
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="url" class="form-label">Base URL:</label>
+                <input type="url" id="url" name="url" class="form-control  form-control-sm" value="{{ sensor.url }}" required>
+            </div>
+            <button type="button" id="update-sensor" class="btn btn-primary">Update Sensor</button>
+        </form>
+    </div>
+    <div class="col-5 align-top" style="font-size: 0.75rem;max-height:200px;overflow: scroll;">
+        Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet. Laboris ipsum est qui ut commodo culpa ex proident veniam amet sit magna. Quis in consectetur aute nisi eiusmod pariatur ex dolor dolor excepteur cillum duis. Enim duis aliqua dolore qui quis. Ad voluptate ea adipisicing do reprehenderit est sint in est nostrud magna cillum proident incididunt. Aliquip enim excepteur eiusmod exercitation mollit ipsum tempor dolore labore voluptate cillum enim elit ullamco. Aliquip et ut ipsum dolore aliqua consequat sint tempor aute ad.
+        Labore eu qui aliqua et labore ipsum. Ut et nisi cillum quis nostrud. Nulla laborum pariatur ut deserunt. Adipisicing aliquip laborum proident ex eu sint sit est. Labore culpa anim dolor aute non. Pariatur aute est voluptate voluptate nostrud deserunt Lorem.
+    </div>    
+</div>    
+
+<!-- Section 2: List of all actions linked to this Sensor -->
+<h1>Actions Linked to Sensor</h1>
+<div class="row mb-4 mx-3 box p-3">
+    <table id="action-table" class="table table-bordered">
+        <tbody>
+            <!-- Data will be populated here by AJAX -->
+        </tbody>
+    </table>
+    <button type="button" id="add-new-action" class="btn btn-success mt-3">Add New Action</button>
+</div>
+
+<!-- Section 3: Form to add or edit an Action -->
+<!-- Section 3: Form to add or edit an Action -->
+<h1 id="addEditActionTitle">Add Action</h1>
+<div class="row mb-4 mx-3 box p-3">
+    <div class="col-7 align-top">
+        <div id="action-form-container">
+            <form id="action-form">
+                <input type="hidden" id="action-id" name="action_id">
+                <div class="mb-3">
+                    <label for="action_name" class="form-label">Action Name:</label><span class="require">*</span>
+                    <input type="text" id="action_name" name="action_name" class="form-control form-control-sm" required>
+                </div>
+                <div class="mb-3">
+                    <label for="action_path" class="form-label">Action Path:</label><span class="require">*</span>
+                    <input type="text" id="action_path" name="action_path" class="form-control form-control-sm" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="action_type" class="form-label">Action Type:</label><span class="require">*</span>
+                    <select id="action_type" name="action_type" class="form-select form-select-sm" required>
+                        <option value="GET"    >GET</option>
+                        <option value="POST"   >POST</option>
+                        <option value="PUT"    >PUT</option>
+                        <option value="DELETE" >DELETE</option>
+                        <option value="PATCH"  >PATCH</option>
+                        <option value="HEAD"   >HEAD</option>
+                        <option value="OPTIONS">OPTIONS</option>
+                        <option value="TRACE"  >TRACE</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="assertion_type" class="form-label">Assertion Type:</label><span class="require">*</span>
+                    <select id="assertion_type" name="assertion_type" class="form-select form-select-sm" required>
+                        <option value="status_code">Status Code</option>
+                        <option value="contains_keyword">Contains Keyword</option>
+                        <option value="element_exists">Element Exists</option>
+                        <option value="json_key_exists">JSON Key Exists</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="expected_value" class="form-label">Expected Value:</label><span class="require">*</span>
+                    <input type="text" id="expected_value" name="expected_value" class="form-control form-control-sm" required>
+                </div>
+                <div class="mb-3" id="selector-container" style="display: none;">
+                    <label for="selector" class="form-label">CSS Selector (for Element Exists):</label>
+                    <input type="text" id="selector" name="selector" class="form-control form-control-sm">
+                </div>
+                <div class="mb-3">
+                    <label for="request_details" class="form-label">Request Details:</label>
+                    <textarea id="request_details" name="request_details" class="form-control form-control-sm"></textarea>
+                </div>
+                <button type="button" id="save-action" class="btn btn-primary">Save Action</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-5 align-top" style="font-size: 0.75rem;">
+        Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet. Laboris ipsum est qui ut commodo culpa ex proident veniam amet sit magna. Quis in consectetur aute nisi eiusmod pariatur ex dolor dolor excepteur cillum duis. Enim duis aliqua dolore qui quis. Ad voluptate ea adipisicing do reprehenderit est sint in est nostrud magna cillum proident incididunt. Aliquip enim excepteur eiusmod exercitation mollit ipsum tempor dolore labore voluptate cillum enim elit ullamco. Aliquip et ut ipsum dolore aliqua consequat sint tempor aute ad.
+        Labore eu qui aliqua et labore ipsum. Ut et nisi cillum quis nostrud. Nulla laborum pariatur ut deserunt. Adipisicing aliquip laborum proident ex eu sint sit est. Labore culpa anim dolor aute non. Pariatur aute est voluptate voluptate nostrud deserunt Lorem.
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    const sensorId = '{{ sensor.id }}';
+
+    // Update Sensor properties
+    $('#update-sensor').click(function() {
+        const data = {
+            name: $('#sensor-edit-form #name').val(),
+            url: $('#sensor-edit-form #url').val(),
+            frequency: $('#sensor-edit-form #frequency').val(),
+        };
+        $.ajax({
+            url: `/api/sensor/${sensorId}/`,
+            method: 'PUT',
+            contentType: 'application/json',
+            headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+            data: JSON.stringify(data),
+            success: function(response) {
+                alert('Sensor updated successfully!');
+            },
+            error: function(error) {
+                console.error('Error updating sensor:', error);
+                alert('Failed to update sensor.');
+            }
+        });
+    });
+
+    // Load Actions linked to Sensor
+    function loadActions() {
+        $.ajax({
+            url: `/api/action/?sensor=${sensorId}`,
+            method: 'GET',
+            success: function(data) {
+                let tableContent = '';
+                data.forEach(function(action) {
+                    tableContent += `<tr>
+                        <td>${action.action_name}</td>
+                        <td nowrap>
+                            <a class="edit-action text-black mx-1" data-id="${action.id}"><i class="bi bi-pencil-square"></i></a>
+                            <a class="delete-action text-danger mx-1" data-id="${action.id}"><i class="bi bi-trash3-fill"></i></a>
+                        </td>
+                    </tr>`;
+                });
+                $('#action-table tbody').html(tableContent);
+            },
+            error: function(error) {
+                console.error('Error fetching actions:', error);
+            }
+        });
+    }
+    loadActions();
+
+    // Add or Edit Action
+    $('#save-action').click(function() {
+        const actionId = $('#action-id').val();
+        let method=null;
+        let url = null;
+        if(actionId){
+            url = `/api/action/${actionId}/`;
+            method = 'PUT';
+        }else{
+            url = `/api/action/`;
+            method = 'POST';
+        }
+        // Client-side validation
+        const actionName = $('#action_name').val();
+        const actionType = $('#action_type').val();
+        const actionPath = $('#action_path').val();
+        const assertionType = $('#assertion_type').val();
+        const expectedValue = $('#expected_value').val();
+        if (!actionName || !actionType || !actionPath || !assertionType || !expectedValue) {
+            alert('Please fill in all required fields before saving.');
+            return;
+        }
+
+        const actionData = {
+            action_name: actionName,
+            action_type: actionType,
+            action_path: actionPath,
+            assertion_type: assertionType,
+            expected_value: expectedValue,
+            selector: $('#selector').val(),
+            request_details: $('#request_details').val(),
+            sensor: sensorId,
+        };
+
+
+
+        $.ajax({
+            url: url,
+            method      : method,
+            contentType : 'application/json',
+            headers     : {'X-CSRFToken': Cookies.get('csrftoken')},
+            data        : JSON.stringify(actionData),
+            success: function(response) {
+                alert('Action saved successfully!');
+                loadActions();
+                $('#action-form')[0].reset();
+                $('#selector-container').hide();
+                $('#action-form-title').text('Add Action');
+            },
+            error: function(error) {
+                console.error('Error saving action:', error);
+                if (error.status === 400) {
+                    alert('Validation failed.' + error.responseText);
+                } else {
+                    alert('An unexpected error occurred while saving the action.');
+                }
+            }
+        });
+    });
+    // Show or hide selector field based on assertion type
+    $('#assertion_type').change(function() {
+        if ($(this).val() === 'element_exists') {
+            $('#selector-container').show();
+        } else {
+            $('#selector-container').hide();
+        }
+    });
+
+    // Handle edit action button click
+    $(document).on('click', '.edit-action', function() {
+        const actionId = $(this).data('id');
+        $('#addEditActionTitle').html('Edit Action')
+        $.ajax({
+            url: `/api/action/${actionId}/`,
+            method: 'GET',
+            success: function(action) {
+                $('#action-id').val(action.id);
+                $('#action_name').val(action.action_name);
+                $('#action_type').val(action.action_type);
+                $('#assertion_type').val(action.assertion_type);
+                $('#expected_value').val(action.expected_value);
+                $('#selector').val(action.selector);
+                if (action.assertion_type === 'element_exists') {
+                    $('#selector-container').show();
+                } else {
+                    $('#selector-container').hide();
+                }
+                $('#request_details').val(action.request_details);
+                $('#action-form-title').text('Edit Action');
+            },
+            error: function(error) {
+                console.error('Error fetching action details:', error);
+            }
+        });
+    });
+
+    // Handle delete action button click
+    $(document).on('click', '.delete-action', function() {
+        const actionId = $(this).data('id');
+        if (confirm('Are you sure you want to delete this action?')) {
+            $.ajax({
+                url: `/api/action/${actionId}/`,
+                method: 'DELETE',
+                headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                success: function() {
+                    alert('Action deleted successfully!');
+                    loadActions();
+                },
+                error: function(error) {
+                    console.error('Error deleting action:', error);
+                    alert('Failed to delete action.');
+                }
+            });
+        }
+    });
+
+    // Handle add new action button click
+    $('#add-new-action').click(function() {
+        $('#addEditActionTitle').html('Add Action')
+        $('#action-id').val(null);
+        $('#action-form')[0].reset();
+        $('#selector-container').hide();
+        $('#action-form-title').text('Add Action');
+    });
+
+});
+</script>
+{% endblock %}

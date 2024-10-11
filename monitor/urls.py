@@ -1,15 +1,22 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 from . import views
 
-router = DefaultRouter()
-router.register(r'sensors', views.SensorViewSet)
-router.register(r'actions', views.ActionViewSet)
-router.register(r'tests', views.TestResultViewSet)
-
 urlpatterns = [
-    path('api/', include(router.urls)),
-    path('test-results/', views.test_results_view, name='test_results'),
-    path('add-sensor/', views.add_sensor, name='add_sensor'),
-    # other urls
+    # Sensor API
+    path('api/sensor/', views.SensorListCreateAPIView.as_view(), name='api_sensor_list_create'),
+    path('api/sensor/<int:pk>/', views.SensorDetailAPIView.as_view(), name='api_sensor_detail'),    
+
+    # Action API
+    path('api/action/'                , views.ActionListCreateAPIView.as_view(), name='api_action_list_create'),
+    path('api/action/<int:pk>/'       , views.ActionDetailAPIView.as_view(), name='api_action_detail'),
+
+    # TestResult API
+    path('api/test-result/'           , views.TestResultListAPIView.as_view()   , name='api_testresult_list'),
+    path('api/test-result/<int:pk>/'  , views.TestResultDetailAPIView.as_view() , name='api_testresult_detail'),
+
+    # Pages
+    path('sensor/'         , views.SensorList.as_view()  , name='web_sensor_list'),
+    path('sensor/add'      , views.SensorAdd.as_view()   , name='web_sensor_add'),
+    path('sensor/<int:pk>/', views.SensorDetail.as_view(), name='web_sensor_detail'),
+
 ]

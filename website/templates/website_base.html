@@ -1,0 +1,58 @@
+<!-- session_detail.html in your templates folder -->
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://fastly.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <link rel="stylesheet" href="{% static '/css/website_styles.css' %}">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">    
+        <title>Djanguard</title>
+        <script defer data-domain="djanguard.com" src="https://plausible.plog.net/js/script.js"></script>
+</head>
+
+<body class="pt-3">
+    <!-- <div class="language-switcher text-center">
+        <a href="/en/"><img src="{% static 'img/en.png' %}" width="20" height="20"></a> |
+        <a href="/fr/"><img src="{% static 'img/fr.png' %}" width="20" height="20"></a> |
+        <a href="/id/"><img src="{% static 'img/id.png' %}" width="20" height="20"></a>
+    </div> -->
+
+    <div class="container-fluid mt-4 header" style="padding-left: 30px; max-width: 1250px;">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="text-center">
+                    <h1 class="display-4 fw-bold">
+                        <img src="{% static 'img/logo.png' %}" class="img-fluid" id="logo" width="35">
+                        <span class="pt-2">Djanguard</span>
+                    </h1>
+                </div>
+            </div>
+        </div>  
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="text-center">
+                    <p class="lead">Comprehensive Monitoring Solution for Your Infrastructure</p>
+                </div>
+            </div>
+        </div>          
+        <div class="container w-75">
+            {% block content %}
+    
+            {% endblock %}
+        </div>
+    </div>
+</body>
+
+</html>
