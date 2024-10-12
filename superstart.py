@@ -194,7 +194,7 @@ def main():
         if ENVIRONMENT == 'development':
             start_watchdog()
         else:
-            wait_for_process('gunicorn')
+            wait_for_process('celery')
             while True:
                 time.sleep(1)            
 

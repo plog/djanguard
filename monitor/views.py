@@ -16,10 +16,14 @@ from .serializers import ActionSerializer, SensorSerializer, TestResultSerialize
 
 # Pages
 #---------------------
+class Board(LoginRequiredMixin,TemplateView):
+    template_name = 'board.html'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
 class SensorList(LoginRequiredMixin,TemplateView):
     template_name = 'sensor_list.html'
-    # Optionally, you can override the get_context_data method if needed
-    # to add extra context to the template.
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context

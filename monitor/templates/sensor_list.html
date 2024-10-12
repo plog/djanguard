@@ -44,11 +44,11 @@
 
 <script>
     function createSensorRow(sensor){
-        console.log(sensor)
         return `<tr>
                 <td>${sensor.name}</td>
                 <td>${sensor.url}</td>
-                <td>${sensor.frequency}</td>
+                <td class="text-center">${sensor.frequency}</td>
+                <td class="text-center">${sensor.actions_count}
                 <td nowrap>${createActionButtons(sensor)}</td>
             </tr>`;
     }

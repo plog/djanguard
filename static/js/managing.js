@@ -113,6 +113,7 @@ async function fetchBackend(searchTerm, model) {
         const response = await fetch('/api/sensor/', {method: 'GET',headers: { 'Content-Type': 'application/json', 'search': searchTermValue }});
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
+        console.log(data)
        displaySensors(data)
     } catch (error) {
         console.error('Error fetching sensor:', error);

@@ -13,7 +13,7 @@
             <thead>
                 <tr>
                     <th>Action</th>
-                    <th>Timestamp</th>
+                    <th>Last</th>
                     <th>Test Results</th>
                 </tr>
             </thead>
@@ -21,7 +21,7 @@
                 {% for action in actions %}
                 <tr>
                     <td>{{ action.action_name }}</td>
-                    <td>{{ action.timestamp }}</td>
+                    <td>{{ action.last_execution }}</td>
                     <td>
                         {% if action.test_results %}
                             <pre>{{ action.test_results|safe }}</pre>

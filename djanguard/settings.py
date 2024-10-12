@@ -1,10 +1,12 @@
 from pathlib import Path
 from decouple import config
+from celery.schedules import crontab
+from datetime import datetime, timedelta
 import os
 
 BASE_DIR              = Path(__file__).resolve().parent.parent
 ADMIN_URL             = config('ADMIN_URL')
-LOGIN_REDIRECT_URL    = '/sensor/'
+LOGIN_REDIRECT_URL    = '/board/'
 LOGOUT_REDIRECT_URL   = LOGIN_REDIRECT_URL
 LOGIN_URL             = f'/accounts/login/?next={LOGIN_REDIRECT_URL}'
 
@@ -22,6 +24,14 @@ CELERY_RESULT_EXTENDED   = True
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TASK_SOFT_TIME_LIMIT = 1600  # 10 minutes soft time limit
 CELERY_TASK_TIME_LIMIT = 1200  # 20 minutes hard time limit
+
+CELERY_BEAT_SCHEDULE = {
+    'check-sensors-periodically': {
+        'task': 'monitor.tasks.schedule_sensor_actions',
+        'schedule': timedelta(seconds=10),  # Run every 10 seconds
+    },
+}
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [

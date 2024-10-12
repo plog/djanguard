@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/test-result/<int:pk>/'  , views.TestResultDetailAPIView.as_view() , name='api_testresult_detail'),
 
     # Pages
+    path('board/'          , views.Board.as_view()       , name='web_board'),
     path('sensor/'         , views.SensorList.as_view()  , name='web_sensor_list'),
     path('sensor/add'      , views.SensorAdd.as_view()   , name='web_sensor_add'),
     path('sensor/<int:pk>/', views.SensorDetail.as_view(), name='web_sensor_detail'),

@@ -46,7 +46,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: 'plog/djanguard_django:0.1'
     restart: unless-stopped
     volumes:
       - .:/app:rw
