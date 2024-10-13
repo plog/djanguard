@@ -2,52 +2,41 @@ from django.db import models
 import json
 
 HTTP_VERBS = [
-            ('GET', 'GET'),
-            ('POST', 'POST'),
-            ('PUT', 'PUT'),
-            ('DELETE', 'DELETE'),
-            ('PATCH', 'PATCH'),
-            ('HEAD', 'HEAD'),
+            ('GET'    , 'GET'),
+            ('POST'   , 'POST'),
+            ('PUT'    , 'PUT'),
+            ('DELETE' , 'DELETE'),
+            ('PATCH'  , 'PATCH'),
+            ('HEAD'   , 'HEAD'),
             ('OPTIONS', 'OPTIONS'),
-            ('TRACE', 'TRACE')
+            ('TRACE'  , 'TRACE')
 ]
 
 ASSERTION_TYPES = [
-    ('status_code', 'Status Code'),
+    ('status_code'     , 'Status Code'),
     ('contains_keyword', 'Contains Keyword'),
-    ('element_exists', 'Element Exists'),
-    ('json_key_exists', 'JSON Key Exists'),
+    ('selenium'        , 'Selenium Style'),
+    ('json_key_exists' , 'JSON Key Exists'),
 ]
 
 class Action(models.Model):
-    action_name    = models.CharField(max_length=100)
-    action_type    = models.CharField(max_length=10, choices=HTTP_VERBS, default='GET')
-    action_path    = models.CharField(default='')
-    last_execution = models.DateTimeField(auto_now_add=True)
-    request_body   = models.JSONField(null=True, blank=True)
-    sensor         = models.ForeignKey('Sensor', on_delete=models.CASCADE, related_name='actions')
-    assertion_type = models.CharField(max_length=50, choices=ASSERTION_TYPES, default='status_code')
-    expected_value = models.CharField(max_length=200, help_text="The expected value for this assertion")
-    selector       = models.CharField(max_length=200, null=True, blank=True, help_text="CSS Selector (for element_exists type)")  # Only needed for 'element_exists'
+    action_name     = models.CharField(max_length=100)
+    action_type     = models.CharField(max_length=10, choices=HTTP_VERBS, default='GET')
+    action_path     = models.CharField(default='')
+    last_execution  = models.DateTimeField(auto_now_add=True)
+    payload         = models.JSONField(null=True, blank=True)
+    sensor          = models.ForeignKey('Sensor', on_delete=models.CASCADE, related_name='actions')
+    assertion_type  = models.CharField(max_length=50, choices=ASSERTION_TYPES, default='status_code')
+    expected_value  = models.CharField(max_length=200, help_text="The expected value for this assertion")
+    selenium_script = models.CharField(null=True, blank=True, help_text="Selenium Style script)") 
+    sequence        = models.IntegerField(help_text="Order of the command",default=0) 
 
     def __str__(self):
         return f"{self.action_name} ({self.get_action_type_display()})"
 
-    def get_request_body(self):
-        return json.dumps(self.request_body, indent=4)
+    def get_payload(self):
+        return json.dumps(self.payload, indent=4)
 
-    def get_assertion_details(self):
-        """
-        Returns the details of the assertion for easy reference or logging purposes.
-        """
-        details = {
-            "assertion_type": self.assertion_type,
-            "expected_value": self.expected_value,
-        }
-        if self.assertion_type == "element_exists":
-            details["selector"] = self.selector
-        return details
-    
 class Sensor(models.Model):
     name = models.CharField(max_length=100)
     url = models.URLField(max_length=200)

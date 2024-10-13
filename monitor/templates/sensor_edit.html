@@ -59,7 +59,7 @@
 </div>
 
 <!-- Section 3: Form to add or edit an Action -->
-<h1 id="addEditActionTitle">Add Action</h1>
+<h1 id="addEditActionTitle">New Action</h1>
 <div class="row mb-4 mx-3 box p-3">
     <div class="col-7 align-top">
         <div id="action-form-container">
@@ -90,32 +90,33 @@
                 <div class="mb-2">
                     <label for="assertion_type" class="form-label">Assertion Type:</label><span class="require">*</span>
                     <select id="assertion_type" name="assertion_type" class="form-select form-select-sm" required>
-                        <option value="status_code">Status Code</option>
+                        <option value="status_code"     >Status Code</option>
                         <option value="contains_keyword">Contains Keyword</option>
-                        <option value="element_exists">Element Exists</option>
-                        <option value="json_key_exists">JSON Key Exists</option>
+                        <option value="selenium"        >Selenium Style</option>
+                        <option value="json_key_exists" >JSON Key Exists</option>
                     </select>
                 </div>
                 <div class="mb-2">
                     <label for="expected_value" class="form-label">Expected Value:</label><span class="require">*</span>
                     <input type="text" id="expected_value" name="expected_value" class="form-control form-control-sm" required>
                 </div>
-                <div class="mb-2" id="selector-container" style="display: none;">
-                    <label for="selector" class="form-label">CSS Selector (for Element Exists):</label>
-                    <input type="text" id="selector" name="selector" class="form-control form-control-sm">
-                </div>
-                <div class="mb-2">
-                    <label for="request_body" class="form-label">Request Body:</label>
-                    <textarea id="request_body" name="request_body" class="form-control form-control-sm"></textarea>
+                <div id="selenium-section" class="mb-2" style="display: none;">
+                    <label for="selenium_script" class="form-label">Selenium style:</label>
+                    <textarea id="selenium_script" name="selenium_script" class="form-control form-control-sm" rows="5"></textarea>
+                </div>                
+                <div id="payload-section" class="mb-2">
+                    <label for="payload" class="form-label">Payload:</label>
+                    <textarea id="payload" name="payload" class="form-control form-control-sm" rows="5"></textarea>
                 </div>
 
                 <button type="button" id="save-action" class="btn btn-sm btn-primary">Save Action</button>
+                <button type="button" id="test-action" class="btn btn-sm btn-primary">Test Action</button>
                 
             </form>
         </div>
     </div>
 
-    <div class="col-5 align-top context-doc doc2">
+    <div class="col-5 align-top context-doc doc2" id="test-result">
         Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet. Laboris ipsum est qui ut commodo culpa ex proident veniam amet sit magna. Quis in consectetur aute nisi eiusmod pariatur ex dolor dolor excepteur cillum duis. Enim duis aliqua dolore qui quis. Ad voluptate ea adipisicing do reprehenderit est sint in est nostrud magna cillum proident incididunt. Aliquip enim excepteur eiusmod exercitation mollit ipsum tempor dolore labore voluptate cillum enim elit ullamco. Aliquip et ut ipsum dolore aliqua consequat sint tempor aute ad.
         Labore eu qui aliqua et labore ipsum. Ut et nisi cillum quis nostrud. Nulla laborum pariatur ut deserunt. Adipisicing aliquip laborum proident ex eu sint sit est. Labore culpa anim dolor aute non. Pariatur aute est voluptate voluptate nostrud deserunt Lorem.
 
@@ -135,7 +136,7 @@
 
 <script>
 $(document).ready(function() {
-    const sensorId = '{{ sensor.id }}';
+    const sensorId = parseInt('{{ sensor.id }}');
     // Update Sensor properties
     $('#update-sensor').click(function() {
         const data = {
@@ -187,11 +188,11 @@ $(document).ready(function() {
     loadActions();
 
     function clearActionForm(){
-        $('#addEditActionTitle').html('Add Action')
+        $('#addEditActionTitle').html('New Action')
         $('#action-id').val(null);
         $('#action-form')[0].reset();
-        $('#selector-container').hide();
-        $('#action-form-title').text('Add Action');        
+        $('#selenium-section').hide();
+        $('#action-form-title').text('New Action');        
     }
 
     // Handle add new action button click
@@ -199,11 +200,12 @@ $(document).ready(function() {
         clearActionForm()
     });    
 
-    // Add or Edit Action
-    $('#save-action').click(function() {
+
+    function saveAction(callback) {
         const actionId = $('#action-id').val();
-        let method=null;
-        let url = null;
+        let method     = null;
+        let url        = null;
+
         if(actionId){
             url = `/api/action/${actionId}/`;
             method = 'PUT';
@@ -212,11 +214,14 @@ $(document).ready(function() {
             method = 'POST';
         }
         // Client-side validation
-        const actionName    = $('#action_name').val();
-        const actionType    = $('#action_type').val();
-        const actionPath    = $('#action_path').val();
-        const assertionType = $('#assertion_type').val();
-        const expectedValue = $('#expected_value').val();
+        const actionName      = $('#action_name').val();
+        const actionType      = $('#action_type').val();
+        const actionPath      = $('#action_path').val();
+        const assertionType   = $('#assertion_type').val();
+        const expectedValue   = $('#expected_value').val();
+        const payload         = $('#payload').val();
+        const selenium_script = $('#selenium_script').val().replace(/\\"/g, '"');
+
         if (!actionName || !actionType || !actionPath || !assertionType || !expectedValue) {
             alert('Please fill in all required fields before saving.');
             return;
@@ -228,8 +233,8 @@ $(document).ready(function() {
             action_path     : actionPath,
             assertion_type  : assertionType,
             expected_value  : expectedValue,
-            selector        : $('#selector').val(),
-            request_body    : $('#request_body').val(),
+            payload         : payload,
+            selenium_script : selenium_script,
             sensor          : sensorId,
         };
 
@@ -242,7 +247,8 @@ $(document).ready(function() {
             success: function(response) {
                 console.log('Action saved successfully!');
                 loadActions();
-                clearActionForm()
+                if (callback) callback(response.id);
+                // clearActionForm()
             },
             error: function(error) {
                 console.error('Error saving action:', error);
@@ -252,26 +258,57 @@ $(document).ready(function() {
                     alert('An unexpected error occurred while saving the action.');
                 }
             }
+        });  
+    }
+
+    // Add or Edit Action
+    $('#save-action').click(function() {
+        saveAction();
+    });
+
+    $('#test-action').click(function() {
+        const actionId = $('#action-id').val();
+        $('#test-result').html('');
+        saveAction(function(actionId) {
+            // Then, execute the test action
+            $.ajax({
+                url: `/api/action/${actionId}/run/`,
+                type: 'POST',
+                headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                success: function(response) {
+                    const respo = JSON.stringify(response.response, null, 2);
+                    $('#test-result').html(`<h3>${response.message}</h3>${respo}`)
+                },
+                error: function(xhr, status, error) {
+                    $('#test-result').html(xhr.responseJSON.error)
+                }
+            });
         });
     });
 
-    // Show or hide selector field based on assertion type
+    // Show or hide selenium field based on assertion type
     $('#assertion_type').change(function() {
-        if ($(this).val() === 'element_exists') {
-            $('#selector-container').show();
+        if ($(this).val() === 'selenium') {
+            $('#selenium-section').show();
+            $('#payload-section').hide();
+            $('#payload-section').hide();
         } else {
-            $('#selector-container').hide();
+            $('#selenium-section').hide();
+            $('#payload-section').show();
         }
     });
 
     // Handle edit action button click
     $(document).on('click', '.edit-action', function() {
         $('#addEditActionTitle').html(`Edit `);
+        $('#test-result').html('');
+
         const actionId = $(this).data('id');
         $.ajax({
             url: `/api/action/${actionId}/`,
             method: 'GET',
             success: function(action) {
+                console.log(action)
                 $('#addEditActionTitle').html(`Edit "${action.action_name}"`);
                 $('#action-id').val(action.id);
                 $('#action_path').val(action.action_path);
@@ -279,13 +316,17 @@ $(document).ready(function() {
                 $('#action_type').val(action.action_type);
                 $('#assertion_type').val(action.assertion_type);
                 $('#expected_value').val(action.expected_value);
-                $('#selector').val(action.selector);
-                if (action.assertion_type === 'element_exists') {
-                    $('#selector-container').show();
+                if (action.assertion_type == "selenium") {
+                    $('#selenium-section').show();
+                    $('#payload-section').hide();
+                    $('#selenium_script').val(action.selenium_script);
+                    $('#payload').val('');
                 } else {
-                    $('#selector-container').hide();
+                    $('#selenium-section').hide();
+                    $('#payload-section').show();
+                    $('#selenium_script').val('');
+                    $('#payload').val(action.payload);
                 }
-                $('#request_body').val(action.request_body);
                 $('#action-form-title').text('Edit Action');
             },
             error: function(error) {

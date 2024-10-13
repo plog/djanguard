@@ -48,6 +48,10 @@ h3 {
     font-stretch: normal;
     margin: 0;
 }
+h3.board {
+    font-size: 0.8rem !important;
+    font-weight: 700;
+}
 .row.databox {
     margin-top: 20px;
     border: 2px solid gray;
@@ -56,16 +60,8 @@ h3 {
     padding: 0px 0 10px 0;
 }
 
-.row.databox.gmap {
-    padding: 0px;
-}
-
-.row.databox.events {
-    padding: 0px 0 15px 0px
-}
-
-.row.databox.title {
-    padding: 16px 0 15px 0px;
+#test-result h3{
+    margin-top:10px;
 }
 
 .bi-arrow-clockwise::before{
@@ -94,53 +90,6 @@ h3 {
     padding: 3px 0px 0 9px;
     font-size: 0.8rem;
     font-weight: 800;
-}
-
-.badge {
-    border-radius: 20px;
-    font-size: 0.8rem;
-    vertical-align: bottom;
-    padding: 4px 0px 4px 9px;
-    text-align: left;
-    position: relative;
-}
-
-.badgedetail {
-    font-size: 1rem;
-    width: 154px;
-    padding: 4px 0px 5px 8px;
-}
-
-.badgelist{
-    width:110px;
-}
-
-.badgelist span {
-    font-size: 0.6rem;
-    position: absolute;
-    top: 5px;
-    right: 13px;
-}
-.badge.A {
-    background-color: #33882e !important;
-}
-.badge.B {
-    background-color: #049f76 !important;
-}
-.badge.C {
-    background-color: #ca7e02 !important;
-}
-.badge.D {
-    background-color: #dc4d06 !important;
-}
-.badge.E {
-    background-color: #c12806 !important;
-}
-.badge.F {
-    background-color: #f00000 !important;  
-}
-.badge.X {
-    background-color: #555555 !important;
 }
 
 .logout{

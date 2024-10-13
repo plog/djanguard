@@ -24,12 +24,17 @@ CELERY_RESULT_EXTENDED   = True
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TASK_SOFT_TIME_LIMIT = 1600  # 10 minutes soft time limit
 CELERY_TASK_TIME_LIMIT = 1200  # 20 minutes hard time limit
+CELERY_TASK_RESULT_EXPIRES = timedelta(minutes=15)
 
 CELERY_BEAT_SCHEDULE = {
     'check-sensors-periodically': {
         'task': 'monitor.tasks.schedule_sensor_actions',
-        'schedule': timedelta(seconds=10),  # Run every 10 seconds
+        'schedule': timedelta(seconds=30),  # Run every 10 seconds
     },
+    'delete-old-task-results-every-hour': {
+        'task': 'monitor.tasks.delete_old_task_results',
+        'schedule': timedelta(seconds=60),  # This runs every hour at the start of the hour
+    },    
 }
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

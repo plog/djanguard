@@ -1,18 +1,25 @@
 # views.py
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, ListCreateAPIView
+from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.serializers import ValidationError
+
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
+
+from .tasks import run_playwright_action
 from .models import Action, Sensor, TestResult
 from .serializers import ActionSerializer, SensorSerializer, TestResultSerializer
+
+import logging
+
+logger = logging.getLogger('django')
 
 # Pages
 #---------------------
@@ -62,7 +69,7 @@ class SensorListCreateAPIView(ListCreateAPIView):
             queryset = queryset.filter(name__icontains=search_term)
         return queryset
 
-# Retrieve, update, or delete a sensor
+# Sensors: Retrieve, update, or delete a sensor
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class SensorDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -89,7 +96,6 @@ class SensorDetailAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # Actions
-# List all actions or create a new action
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class ActionListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -109,7 +115,7 @@ class ActionListCreateAPIView(ListCreateAPIView):
                 'details': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-# Retrieve, update, or delete an action
+# Actions Retrieve, update, or delete an action
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class ActionDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -138,8 +144,14 @@ class ActionDetailAPIView(APIView):
 # TestResult
 class TestResultListAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        test_results = TestResult.objects.all()
+        one_hour_ago = timezone.now() - timezone.timedelta(hours=1)
+        action_id = request.query_params.get('action_id')
+        if action_id:
+            test_results = TestResult.objects.filter(action_id=action_id,timestamp__gte=one_hour_ago)
+        else:
+            test_results = TestResult.objects.filter(timestamp__gte=one_hour_ago)
         serializer = TestResultSerializer(test_results, many=True)
         return Response(serializer.data)
 
@@ -181,3 +193,17 @@ class TestResultDetailAPIView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         test_result.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ActionRunNowAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, action_id):
+        try:
+            # Run the asynchronous Playwright function synchronously for immediate execution
+            response = run_playwright_action(action_id)
+            return Response({'message': f'Action {action_id} executed successfully','response':response}, status=status.HTTP_200_OK)
+        except Action.DoesNotExist as exc:
+            logger.error(f"ActionRunNowAPIView DoesNotExist {exc}")
+            return Response({'error': 'Action not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as exc:
+            logger.error(f"ActionRunNowAPIView Exception {exc}")
+            return Response({'error': 'An unexpected error occurred', 'details': str(exc)}, status=status.HTTP_400_BAD_REQUEST)

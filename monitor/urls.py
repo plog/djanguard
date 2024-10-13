@@ -3,16 +3,17 @@ from . import views
 
 urlpatterns = [
     # Sensor API
-    path('api/sensor/', views.SensorListCreateAPIView.as_view(), name='api_sensor_list_create'),
-    path('api/sensor/<int:pk>/', views.SensorDetailAPIView.as_view(), name='api_sensor_detail'),    
+    path('api/sensor/'         , views.SensorListCreateAPIView.as_view(), name='api_sensor_list_create'),
+    path('api/sensor/<int:pk>/', views.SensorDetailAPIView.as_view()    , name='api_sensor_detail'),    
 
     # Action API
-    path('api/action/'                , views.ActionListCreateAPIView.as_view(), name='api_action_list_create'),
-    path('api/action/<int:pk>/'       , views.ActionDetailAPIView.as_view(), name='api_action_detail'),
+    path('api/action/'                    , views.ActionListCreateAPIView.as_view(), name='api_action_list_create'),
+    path('api/action/<int:pk>/'           , views.ActionDetailAPIView.as_view()    , name='api_action_detail'),
+    path('api/action/<int:action_id>/run/', views.ActionRunNowAPIView.as_view()    , name='run_action_now'),  # New URL for running action
 
     # TestResult API
-    path('api/test-result/'           , views.TestResultListAPIView.as_view()   , name='api_testresult_list'),
-    path('api/test-result/<int:pk>/'  , views.TestResultDetailAPIView.as_view() , name='api_testresult_detail'),
+    path('api/test-result/'          , views.TestResultListAPIView.as_view()   , name='api_testresult_list'),
+    path('api/test-result/<int:pk>/' , views.TestResultDetailAPIView.as_view() , name='api_testresult_detail'),
 
     # Pages
     path('board/'          , views.Board.as_view()       , name='web_board'),

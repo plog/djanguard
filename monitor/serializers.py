@@ -3,6 +3,7 @@ from .models import Action, Sensor, TestResult
 from django.db.models import Count
 
 class SensorSerializer(serializers.ModelSerializer):
+    short_url     = serializers.SerializerMethodField()
     actions_count = serializers.SerializerMethodField()
     class Meta:
         model = Sensor
@@ -10,11 +11,17 @@ class SensorSerializer(serializers.ModelSerializer):
 
     def get_actions_count(self, obj):
         return obj.actions.count()  # Count the related actions using the related name 'actions'
+
+    def get_short_url(self, obj):
+        if hasattr(obj, 'url'):
+            return obj.url[:30]+'...'
+        return ''        
     
 class ActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Action
         fields = '__all__'
+
 
 class TestResultSerializer(serializers.ModelSerializer):
     class Meta:

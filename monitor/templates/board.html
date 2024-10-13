@@ -1,7 +1,160 @@
 {% extends "monitor_base.html" %}
 {% load static %}
-{% load form_tags %}
-{% block content %}
 
-<h1>Ze board...</h1>
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">Sensor Dashboard</h1>
+    <div class="row" id="sensor-container">
+        <!-- Sensors will be loaded here via AJAX -->
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchSensors();
+        window.addEventListener('resize', resizeAllCharts);
+    });
+
+    function fetchSensors() {
+        $.ajax({
+            url: '/api/sensor/', // Using the correct API endpoint
+            type: 'GET',
+            success: function(sensors) {
+                sensors.forEach(sensor => {
+                    $('#sensor-container').append(`
+                        <div class="col-12 col-sm-6 col-lg-4 mb-3">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5 class="card-title">
+                                        ${sensor.name}&nbsp;
+                                        <a href="/sensor/${sensor.id}/"><i class="bi bi-pencil-square"></i></a></h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        ${sensor.short_url}<br>
+                                        Every ${sensor.frequency} seconds
+                                    </p>
+                                    <div id="actions-${sensor.id}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    fetchActions(sensor.id);
+                });
+            },
+            error: function(error) {
+                console.error('Error fetching sensors:', error);
+            }
+        });
+    }
+
+    function fetchActions(sensorId) {
+        $.ajax({
+            url: `/api/action/?sensor=${sensorId}`, // Using the correct API endpoint for actions
+            type: 'GET',
+            success: function(actions) {
+                actions.forEach(action => {
+                    $(`#actions-${sensorId}`).append(`
+                        <h3 class="board">${action.action_name} (${action.action_type})</h3>
+                        <div id="chart-action-${action.id}" class="chart-container" style="height: 50px; width: 90%;"></div>
+                    `);
+                    fetchTestResults(action.id);
+                });
+            },
+            error: function(error) {
+                console.error('Error fetching actions:', error);
+            }
+        });
+    }
+
+    function fetchTestResults(actionId) {
+        if (!window.testResultsCache) {
+            window.testResultsCache = {};
+        }
+
+        if (window.testResultsCache[actionId]) {
+            renderTimeline(actionId, window.testResultsCache[actionId]);
+        }else{
+            $.ajax({
+                url: `/api/test-result/?action_id=${actionId}`, // Using the correct API endpoint for test results
+                type: 'GET',
+                success: function(result) {
+                    window.testResultsCache[actionId] = result;
+                    console.log(`ACTION ${actionId}:` , result.length)
+                    renderTimeline(actionId, result);
+                },
+                error: function(error) {
+                    console.error('Error fetching test results:', error);
+                }
+            });
+        }
+    }
+
+    function renderTimeline(actionId, testResults) {
+        const chartElement = d3.select(`#chart-action-${actionId}`);
+        chartElement.html(""); // Clear previous chart
+
+        if(testResults.length == 0){
+            chartElement.html("No data");
+            return
+        }
+
+        const margin = {top: 5, right: 0, bottom: 20, left: 0};
+        const width = chartElement.node().parentNode.clientWidth - margin.left - margin.right;
+        const height = 30 - margin.top - margin.bottom;
+
+        const svg = chartElement
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+            .attr("preserveAspectRatio", "xMinYMin meet")
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const parseTime = d3.isoParse;
+
+        const data = testResults.map(result => ({
+            id: parseInt(result.id),
+            action_id: parseInt(result.action),
+            timestamp: parseTime(result.timestamp),
+            value: result.actual_value,
+        }));
+
+        const x = d3.scaleTime()
+            .domain(d3.extent(data, d => d.timestamp))
+            .range([0, width]);
+
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x).ticks(5));
+
+        const colorScale = d3.scaleOrdinal()
+            .domain(["200", "403", "500", "404"])
+            .range(["green", "orange", "red", "red"]);
+
+        svg.selectAll("rect")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("x", d => x(d.timestamp))
+            .attr("y", 0)
+            .attr("width", 3) // Fixed width for better visibility of events
+            .attr("height", height)
+            .attr("fill", d => colorScale(d.value));
+    }
+
+    function resizeAllCharts() {
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(() => {
+            d3.selectAll(".chart-container").each(function() {
+                const actionId = this.id.split("-action-")[1];
+                if (window.testResultsCache && window.testResultsCache[actionId]) {
+                    renderTimeline(actionId, window.testResultsCache[actionId]);
+                }
+            });
+        }, 150);
+    }
+</script>
+
 {% endblock %}
