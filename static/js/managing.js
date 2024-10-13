@@ -92,17 +92,20 @@ function setupTimezoneSelector() {
 
     timezoneSelect.addEventListener('change', () => {
         localStorage.setItem('selectedTimezone', timezoneSelect.value);
+        window.location.reload();
     });
 }
 
 // Function to format date based on selected timezone
 function formatDate(dateString) {
     try {
-        const timezone = localStorage.getItem('selectedTimezone');
-        const date = moment.utc(dateString);
-        return moment.utc(date).tz(timezone).format('MM/DD HH:mm z');
+        const timezone = localStorage.getItem('selectedTimezone') || 'UTC';
+        const tz = moment.utc(dateString).tz(timezone);
+        console.log(dateString, '---', tz.format()); // Display the timestamp with timezone info for verification
+        return tz.toDate(); // Use .toDate() if you need a Date object, otherwise return tz directly if using d3
     } catch (error) {
-        return '';
+        console.error(error);
+        return new Date(dateString); // Fallback to the original date if there's an error
     }
 }
 

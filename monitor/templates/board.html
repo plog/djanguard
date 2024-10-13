@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="container my-4">
+    <select class="form-control" id="timezone"></select>
     <h1 class="mb-4">Sensor Dashboard</h1>
     <div class="row" id="sensor-container">
         <!-- Sensors will be loaded here via AJAX -->
@@ -10,7 +11,8 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
+        setupTimezoneSelector();
         fetchSensors();
         window.addEventListener('resize', resizeAllCharts);
     });
@@ -27,11 +29,14 @@
                                 <div class="card-header">
                                     <h5 class="card-title">
                                         ${sensor.name}&nbsp;
-                                        <a href="/sensor/${sensor.id}/"><i class="bi bi-pencil-square"></i></a></h5>
+                                        <a href="/sensor/${sensor.id}/"><i class="bi bi-pencil-square"></i></a>
+                                        <i class="bi bi-play-circle-fill"></i>
+                                    </h5>
                                 </div>
                                 <div class="card-body">
                                     <p class="card-text">
-                                        ${sensor.short_url}<br>
+                                        <img src="${sensor.favico}" height="15">
+                                        <a href="${sensor.url}" class="sensor_url">${sensor.short_url}</a><br>
                                         Every ${sensor.frequency} seconds
                                     </p>
                                     <div id="actions-${sensor.id}"></div>
@@ -101,7 +106,7 @@
 
         const margin = {top: 5, right: 0, bottom: 20, left: 0};
         const width = chartElement.node().parentNode.clientWidth - margin.left - margin.right;
-        const height = 30 - margin.top - margin.bottom;
+        const height = 35 - margin.top - margin.bottom;
 
         const svg = chartElement
             .append("svg")
@@ -117,7 +122,8 @@
         const data = testResults.map(result => ({
             id: parseInt(result.id),
             action_id: parseInt(result.action),
-            timestamp: parseTime(result.timestamp),
+            // timestamp: parseTime(result.timestamp),
+            timestamp: formatDate(result.timestamp),
             value: result.actual_value,
         }));
 
@@ -125,9 +131,12 @@
             .domain(d3.extent(data, d => d.timestamp))
             .range([0, width]);
 
-        svg.append("g")
+            svg.append("g")
             .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x).ticks(5));
+            .call(d3.axisBottom(x).ticks(5).tickFormat(d => {
+                const timezone = localStorage.getItem('selectedTimezone') || 'UTC';
+                return moment(d).tz(timezone).format("HH:mm"); // Use Moment.js to format in 24-hour time
+            }));
 
         const colorScale = d3.scaleOrdinal()
             .domain(["200", "403", "500", "404"])
@@ -155,6 +164,8 @@
             });
         }, 150);
     }
+
+
 </script>
 
 {% endblock %}

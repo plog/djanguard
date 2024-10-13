@@ -1,5 +1,6 @@
 argparse
 asgiref
+bs4
 celery
 Django
 django-admin

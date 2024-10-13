@@ -6,13 +6,58 @@ from celery import shared_task
 from celery.schedules import timedelta
 from django_celery_results.models import TaskResult
 from django.utils import timezone
+from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 import asyncio
 import logging
 import aiohttp
 import json
+import re
 
 logger = logging.getLogger('celery_process')
+
+async def get_favicon(url):
+    try:
+        # Ensure the URL is formatted as [protocol]://[domain]
+        parsed_url = url.split("/")
+        base_url = f"{parsed_url[0]}//{parsed_url[2]}"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(base_url) as response:
+                if response.status != 200:
+                    logger.error(f"Failed to fetch page, status code: {response.status}")
+                    return None
+                
+                html_content = await response.text()
+                soup = BeautifulSoup(html_content, 'html.parser')
+                icon_link = None
+                
+                # Search for favicon link elements
+                for link in soup.find_all('link'):
+                    rel = link.get('rel', [])
+                    if 'icon' in rel or 'shortcut icon' in rel:
+                        icon_link = link.get('href')
+                        break
+                
+                # Fallback to /favicon.ico if no link was found
+                if not icon_link:
+                    icon_link = "/favicon.ico"
+                
+                # Construct the full URL if needed
+                if icon_link and not icon_link.startswith("http"):
+                    icon_link = base_url.rstrip('/') + icon_link if icon_link.startswith("/") else f"{base_url.rstrip('/')}/{icon_link}"
+                
+                # Verify if the favicon link is accessible
+                async with session.get(icon_link) as icon_response:
+                    if icon_response.status == 200:
+                        logger.info(f"Favicon URL: {icon_link}")
+                        return icon_link
+                    else:
+                        logger.error(f"Favicon not found at: {icon_link}")
+                        return None
+    except Exception as e:
+        logger.error(f"Error while fetching favicon: {str(e)}")
+        return None
 
 @shared_task()
 def delete_old_task_results():
@@ -46,7 +91,14 @@ def run_playwright_action(self, action_id):
 async def async_run_playwright_action(action_id):
     # Fetch the action from the database using sync_to_async to avoid async context issue
     action      = await sync_to_async(Action.objects.select_related('sensor').get)(id=action_id)
+    sensor      = action.sensor
     test_result = None
+
+    favico = await get_favicon(sensor.url+action.action_path)
+    if favico:
+        sensor.favico = favico
+        await sync_to_async(sensor.save)() 
+
 
     # If the action is a simple status code check, use aiohttp for efficiency
     if action.assertion_type == 'status_code':
@@ -75,21 +127,34 @@ async def async_run_playwright_action(action_id):
         async with async_playwright() as p:
             browser = await p.chromium.launch()
             page    = await browser.new_page()
-            url     = action.sensor.url + action.action_path
+
+            sensor_url  = action.sensor.url
+            action_path = action.action_path
+            start_url   = f"{sensor_url}{action_path}"
+            logger.info(f'Opening start URL: {start_url}')
+            await page.goto(start_url, timeout=10000)
+            logger.info(get_favicon(page))
+
             if action.selector:
-                try:
-                    await page.wait_for_selector(action.selector, timeout=5000)
-                    actual_value = 'Element Found'
-                except Exception:
-                    actual_value = 'Element Not Found'
-                logger.info(f'      {action.action_name} keyword:{actual_value}')
                 test_result = TestResult(
                     action        = action,
                     test_type     = action.assertion_type,
                     expected_value= action.expected_value,
-                    actual_value  = actual_value,
-                    timestamp     = timezone.now(),
-                )
+                    timestamp     = timezone.now()
+                )                
+                try:
+                    await page.wait_for_selector(action.selector, timeout=5000)
+                    actual_value = 'Element Found'
+                    test_result.actual_value = actual_value
+                except Exception:
+                    actual_value             = 'Element Not Found'
+                    page_content             = await page.content()
+                    soup                     = BeautifulSoup(page_content, 'html.parser')
+                    clean_text               = re.sub(r'\s+', ' ', soup.get_text()[:300]).strip()
+                    test_result.body         = clean_text
+                    test_result.actual_value = actual_value
+                    logger.error(f'{action.action_name} keyword:{actual_value}')
+
             # Close the browser
             await browser.close()
             

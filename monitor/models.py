@@ -38,8 +38,9 @@ class Action(models.Model):
         return json.dumps(self.payload, indent=4)
 
 class Sensor(models.Model):
-    name = models.CharField(max_length=100)
-    url = models.URLField(max_length=200)
+    name      = models.CharField(max_length=100)
+    url       = models.URLField(max_length=200)
+    favico    = models.CharField(null=True, blank=True)
     frequency = models.IntegerField(help_text="Frequency in minutes to check the website")
 
     def get_actions_count(self, obj):
@@ -49,15 +50,12 @@ class Sensor(models.Model):
         return self.name
 
 class TestResult(models.Model):
-    action = models.ForeignKey(Action, on_delete=models.CASCADE, related_name='tests')
-    test_type = models.CharField(max_length=100, choices=[
-        ('status_code', 'Status Code'),
-        ('keyword', 'Keyword in Body'),
-        ('response_time', 'Response Time'),
-    ])
+    action         = models.ForeignKey(Action, on_delete=models.CASCADE, related_name='tests')
+    test_type      = models.CharField(max_length=100, choices=ASSERTION_TYPES)
     expected_value = models.CharField(max_length=100, help_text="Expected value for this test")
     actual_value   = models.CharField(max_length=100, null=True, blank=True, help_text="Actual value observed during the test")
     timestamp      = models.DateTimeField(auto_now_add=True)
+    body           = models.CharField(max_length=255, null=True, blank=True, help_text="Add more context to the results")
 
     def __str__(self):
         return f"{self.test_type} test for action '{self.action.action_name}' at {self.timestamp}"

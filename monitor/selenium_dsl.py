@@ -3,7 +3,7 @@ import asyncio
 from playwright.async_api import async_playwright
 from .models import Action, TestResult, Sensor
 from django.utils import timezone
-import traceback
+from bs4 import BeautifulSoup
 import logging
 logger = logging.getLogger('celery_process')
 
@@ -28,7 +28,6 @@ class CommandHandler:
         # Wait for navigation and get the new page content
         await self.page.wait_for_load_state('networkidle')
         page_content = await self.page.content()
-        logger.info(f'New page content after clicking: {page_content[:200]}...')  # Log a portion of the content for debugging
         return page_content
 
     async def check_text_present(self, text):
@@ -61,7 +60,6 @@ class CommandHandler:
         # Wait for navigation and get the new page content
         await self.page.wait_for_load_state('networkidle')
         page_content = await self.page.content()
-        logger.info(f'New page content after clicking at coordinates: {page_content[:200]}...')  # Log a portion of the content for debugging
         return page_content
 
     async def double_click_element(self, selector):
@@ -71,7 +69,6 @@ class CommandHandler:
         # Wait for navigation and get the new page content
         await self.page.wait_for_load_state('networkidle')
         page_content = await self.page.content()
-        logger.info(f'New page content after double clicking: {page_content[:200]}...')  # Log a portion of the content for debugging
         return page_content
 
     async def drag_and_drop(self, source, target):
@@ -141,12 +138,14 @@ class DSLExecutor:
             browser = await p.chromium.launch(headless=True)
             page    = await browser.new_page()
             handler = CommandHandler(page)
+
             # Automatically open the URL using sensor and action path
-            sensor_url = self.action.sensor.url
+            sensor_url  = self.action.sensor.url
             action_path = self.action.action_path
-            start_url = f"{sensor_url}{action_path}"
+            start_url   = f"{sensor_url}{action_path}"
             logger.info(f'Opening start URL: {start_url}')
-            await page.goto(start_url)
+
+            await page.goto(start_url, timeout=10000)
 
             commands = self.commands.splitlines()
             i = 0
@@ -191,6 +190,10 @@ class DSLExecutor:
                 except Exception as e:
                     testResult.actual_value = 'failed'
                     logger.error(f'Error occurred: {str(e)}')
+                    page_content     = await page.content()
+                    soup             = BeautifulSoup(page_content, 'html.parser')
+                    clean_text       = re.sub(r'\s+', ' ', soup.get_text()[:300]).strip()
+                    testResult.body  = clean_text  # Store part of the page content without HTML tags
                     await browser.close()
                     return testResult
             
