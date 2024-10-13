@@ -12,73 +12,88 @@ class CommandHandler:
         self.page = page
 
     async def check_element_exists(self, selector):
-        print(f'Checking if element exists: {selector}')
+        logger.info(f'Checking if element exists: {selector}')
         await self.page.wait_for_selector(selector, timeout=10000)
         assert await self.page.locator(selector).count() > 0, f"Element {selector} not found"
 
     async def fill_input(self, selector, value):
-        print(f'Filling element {selector} with value: {value}')
+        logger.info(f'Filling element {selector} with value: {value}')
         await self.page.wait_for_selector(selector, timeout=10000)
         await self.page.fill(selector, value)
 
     async def click_element(self, selector):
-        print(f'Clicking element: {selector}')
+        logger.info(f'Clicking element: {selector}')
         await self.page.wait_for_selector(selector, timeout=10000)
         await self.page.click(selector)
+        # Wait for navigation and get the new page content
+        await self.page.wait_for_load_state('networkidle')
+        page_content = await self.page.content()
+        logger.info(f'New page content after clicking: {page_content[:200]}...')  # Log a portion of the content for debugging
+        return page_content
 
     async def check_text_present(self, text):
-        print(f'Checking if text is present: {text}')
+        logger.info(f'Checking if text is present: {text}')
         await self.page.wait_for_timeout(2000)  # Adding a small delay to allow text to appear
         assert await self.page.locator(f'text={text}').count() > 0, f"Text '{text}' not found on page"
 
     async def assert_title(self, expected_title):
-        print(f'Asserting title is: {expected_title}')
+        logger.info(f'Asserting title is: {expected_title}')
         await self.page.wait_for_timeout(2000)
         assert await self.page.title() == expected_title, f"Title does not match: {expected_title}"
 
     async def assert_element_present(self, selector):
-        print(f'Asserting element is present: {selector}')
+        logger.info(f'Asserting element is present: {selector}')
         await self.page.wait_for_selector(selector, timeout=10000)
         assert await self.page.locator(selector).count() > 0, f"Element {selector} not found"
 
     async def assert_element_not_present(self, selector):
-        print(f'Asserting element is not present: {selector}')
+        logger.info(f'Asserting element is not present: {selector}')
         await self.page.wait_for_timeout(2000)
         assert await self.page.locator(selector).count() == 0, f"Element {selector} is present"
 
     async def pause_execution(self):
-        print('Pausing execution')
+        logger.info('Pausing execution')
         await self.page.pause()
 
     async def click_at_coordinates(self, x, y):
-        print(f'Clicking at coordinates: ({x}, {y})')
+        logger.info(f'Clicking at coordinates: ({x}, {y})')
         await self.page.mouse.click(int(x), int(y))
+        # Wait for navigation and get the new page content
+        await self.page.wait_for_load_state('networkidle')
+        page_content = await self.page.content()
+        logger.info(f'New page content after clicking at coordinates: {page_content[:200]}...')  # Log a portion of the content for debugging
+        return page_content
 
     async def double_click_element(self, selector):
-        print(f'Double-clicking element: {selector}')
+        logger.info(f'Double-clicking element: {selector}')
         await self.page.wait_for_selector(selector, timeout=10000)
         await self.page.dblclick(selector)
+        # Wait for navigation and get the new page content
+        await self.page.wait_for_load_state('networkidle')
+        page_content = await self.page.content()
+        logger.info(f'New page content after double clicking: {page_content[:200]}...')  # Log a portion of the content for debugging
+        return page_content
 
     async def drag_and_drop(self, source, target):
-        print(f'Dragging element {source} to {target}')
+        logger.info(f'Dragging element {source} to {target}')
         await self.page.wait_for_selector(source, timeout=10000)
         await self.page.wait_for_selector(target, timeout=10000)
         await self.page.drag_and_drop(source, target)
 
     async def mouse_over_element(self, selector):
-        print(f'Mouse over element: {selector}')
+        logger.info(f'Mouse over element: {selector}')
         await self.page.wait_for_selector(selector, timeout=10000)
         await self.page.hover(selector)
 
     async def set_window_size(self, width, height):
-        print(f'Setting window size to: {width}x{height}')
+        logger.info(f'Setting window size to: {width}x{height}')
         await self.page.set_viewport_size({"width": int(width), "height": int(height)})
 
     async def handle_if_statement(self, condition):
         match = re.match(r'element present "(.+?)"', condition)
         if match:
             selector = match.group(1)
-            print(f'Checking condition if element is present: {selector}')
+            logger.info(f'Checking condition if element is present: {selector}')
             return await self.page.locator(selector).count() > 0
         return False
 
@@ -87,7 +102,7 @@ class CommandHandler:
         if match:
             selector = match.group(1)
             for i in range(int(repeat_count)):
-                print(f'Checking repeat condition if element is not present: {selector}, attempt {i + 1}')
+                logger.info(f'Checking repeat condition if element is not present: {selector}, attempt {i + 1}')
                 if await self.page.locator(selector).count() == 0:
                     return True
                 await self.page.wait_for_timeout(2000)
@@ -130,12 +145,13 @@ class DSLExecutor:
             sensor_url = self.action.sensor.url
             action_path = self.action.action_path
             start_url = f"{sensor_url}{action_path}"
-            print(f'Opening start URL: {start_url}')
+            logger.info(f'Opening start URL: {start_url}')
             await page.goto(start_url)
 
+            commands = self.commands.splitlines()
             i = 0
-            while i < len(self.commands):
-                command = self.commands[i]
+            while i < len(commands):
+                command = commands[i].strip()
                 handled = False
                 try:
                     # Handle if-else conditions
@@ -145,7 +161,7 @@ class DSLExecutor:
                             i += 1
                         else:
                             # Skip to the corresponding 'end'
-                            while i < len(self.commands) and not self.commands[i].startswith('end'):
+                            while i < len(commands) and not commands[i].startswith('end'):
                                 i += 1
                     elif command.startswith('repeat if '):
                         condition, repeat_count = re.match(r'repeat if (.+?) (\d+) times', command).groups()
@@ -169,13 +185,14 @@ class DSLExecutor:
                                 handled = True
                                 break
                         if not handled:
-                            print(f'Unknown command: {command}')
+                            logger.info(f'Unknown command: {command}')
                         i += 1
 
                 except Exception as e:
                     testResult.actual_value = 'failed'
                     logger.error(f'Error occurred: {str(e)}')
-                    break
+                    await browser.close()
+                    return testResult
             
             testResult.actual_value = 'pass'
             await browser.close()

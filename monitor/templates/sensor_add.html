@@ -33,7 +33,7 @@ $(document).ready(function() {
         };
         $.ajax({
             url: '/api/sensor/',
-            method: 'PUT',
+            method: 'POST',
             contentType: 'application/json',
             headers: {'X-CSRFToken': Cookies.get('csrftoken')},
             data: JSON.stringify(data),
