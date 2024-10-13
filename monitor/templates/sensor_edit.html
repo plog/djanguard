@@ -218,9 +218,9 @@ $(document).ready(function() {
         const actionType      = $('#action_type').val();
         const actionPath      = $('#action_path').val();
         const assertionType   = $('#assertion_type').val();
-        const expectedValue   = $('#expected_value').val();
         const payload         = $('#payload').val();
         const selenium_script = $('#selenium_script').val().replace(/\\"/g, '"');
+        let expectedValue   = $('#expected_value').val();
 
         if (!actionName || !actionType || !actionPath || !assertionType || !expectedValue) {
             alert('Please fill in all required fields before saving.');
@@ -276,8 +276,18 @@ $(document).ready(function() {
                 type: 'POST',
                 headers: {'X-CSRFToken': Cookies.get('csrftoken')},
                 success: function(response) {
-                    const respo = JSON.stringify(response.response, null, 2);
-                    $('#test-result').html(`<h3>${response.message}</h3>${respo}`)
+
+                    const { response: resp, message: msg } = response;
+                    console.log(resp, resp.expected_value, resp.actual_value);
+
+                    let html = `<h3>${msg}</h3>`;
+                    html += resp.expected_value === resp.actual_value
+                        ? '<p>&nbsp;</p><p><img src="/static/img/pass.png" width="90"></p>'
+                        : '<p>&nbsp;</p><p><img src="/static/img/fail.png" width="90"></p>';
+
+                    $('#test-result').html(`${html}<br><br><pre>${JSON.stringify(resp, null, 2)}</pre>`);                    
+                    
+
                 },
                 error: function(xhr, status, error) {
                     $('#test-result').html(xhr.responseJSON.error)
@@ -308,24 +318,24 @@ $(document).ready(function() {
             url: `/api/action/${actionId}/`,
             method: 'GET',
             success: function(action) {
-                console.log(action)
                 $('#addEditActionTitle').html(`Edit "${action.action_name}"`);
                 $('#action-id').val(action.id);
                 $('#action_path').val(action.action_path);
                 $('#action_name').val(action.action_name);
                 $('#action_type').val(action.action_type);
                 $('#assertion_type').val(action.assertion_type);
-                $('#expected_value').val(action.expected_value);
                 if (action.assertion_type == "selenium") {
                     $('#selenium-section').show();
                     $('#payload-section').hide();
                     $('#selenium_script').val(action.selenium_script);
+                    $('#expected_value').val('pass');
                     $('#payload').val('');
                 } else {
                     $('#selenium-section').hide();
                     $('#payload-section').show();
                     $('#selenium_script').val('');
                     $('#payload').val(action.payload);
+                    $('#expected_value').val(action.expected_value);
                 }
                 $('#action-form-title').text('Edit Action');
             },

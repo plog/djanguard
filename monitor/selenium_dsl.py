@@ -5,7 +5,6 @@ from .models import Action, TestResult, Sensor
 from django.utils import timezone
 import traceback
 import logging
-
 logger = logging.getLogger('celery_process')
 
 class CommandHandler:
@@ -183,15 +182,14 @@ class DSLExecutor:
             return testResult
 
 # Sample DSL commands
-commands = [
-    'open "https://example.com"',
-    'check-element-exists "#login-button"',
-    'fill "#username" with "testuser"',
-    'fill "#password" with "password123"',
-    'click "#login-button"',
-    'check-text "Welcome" is-present',
-    'if element present "#logout-button"',
-    '    click "#logout-button"',
-    'end',
-    'repeat if element not present "#login-button" 3 times'
-]
+# -------------------
+# open "https://example.com"
+# check-element-exists "#login-button"
+# fill "#username" with "testuser"
+# fill "#password" with "password123"
+# click "#login-button"
+# check-text "Welcome" is-present
+# if element present "#logout-button"
+#     click "#logout-button"
+# end
+# repeat if element not present "#login-button" 3 time

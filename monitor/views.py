@@ -23,22 +23,23 @@ logger = logging.getLogger('django')
 
 # Pages
 #---------------------
-class Board(LoginRequiredMixin,TemplateView):
+class BoardView(LoginRequiredMixin, TemplateView):
+    # Displays the main board page for logged-in users
     template_name = 'board.html'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context
 
-class SensorList(LoginRequiredMixin,TemplateView):
+class SensorListView(LoginRequiredMixin, TemplateView):
+    # Displays the list of sensors for logged-in users
     template_name = 'sensor_list.html'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context
 
-class SensorDetail(LoginRequiredMixin,TemplateView):
+class SensorDetailView(LoginRequiredMixin, TemplateView):
+    # Displays the details of a specific sensor for editing by logged-in users
     template_name = 'sensor_edit.html'
-    # Optionally, you can override the get_context_data method if needed
-    # to add extra context to the template.
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sensor_id = self.kwargs.get('pk')
@@ -46,10 +47,9 @@ class SensorDetail(LoginRequiredMixin,TemplateView):
         context['sensor'] = sensor
         return context
 
-class SensorAdd(LoginRequiredMixin,TemplateView):
+class SensorAddView(LoginRequiredMixin, TemplateView):
+    # Displays the form for adding a new sensor
     template_name = 'sensor_add.html'
-    # Optionally, you can override the get_context_data method if needed
-    # to add extra context to the template.
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context  
@@ -58,7 +58,8 @@ class SensorAdd(LoginRequiredMixin,TemplateView):
 # -------------------
 # Sensors
 @method_decorator(ensure_csrf_cookie, name='dispatch')
-class SensorListCreateAPIView(ListCreateAPIView):
+class SensorListCreateAPI(ListCreateAPIView):
+    # Handles listing and creating sensors for authenticated users
     permission_classes = [IsAuthenticated]
     serializer_class = SensorSerializer
 
@@ -69,9 +70,9 @@ class SensorListCreateAPIView(ListCreateAPIView):
             queryset = queryset.filter(name__icontains=search_term)
         return queryset
 
-# Sensors: Retrieve, update, or delete a sensor
 @method_decorator(ensure_csrf_cookie, name='dispatch')
-class SensorDetailAPIView(APIView):
+class SensorDetailAPI(APIView):
+    # Handles retrieving, updating, and deleting a specific sensor for authenticated users
     permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
@@ -97,10 +98,17 @@ class SensorDetailAPIView(APIView):
 
 # Actions
 @method_decorator(ensure_csrf_cookie, name='dispatch')
-class ActionListCreateAPIView(ListCreateAPIView):
+class ActionListCreateAPI(ListCreateAPIView):
+    # Handles listing and creating actions for authenticated users
     permission_classes = [IsAuthenticated]
-    queryset = Action.objects.all()
     serializer_class = ActionSerializer
+
+    def get_queryset(self):
+        sensor_id = self.request.query_params.get('sensor', None)
+        queryset = Action.objects.order_by('id').all()
+        if sensor_id:
+            queryset = queryset.filter(sensor_id=sensor_id)
+        return queryset
 
     def create(self, request, *args, **kwargs):
         try:
@@ -109,27 +117,26 @@ class ActionListCreateAPIView(ListCreateAPIView):
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
-            # Handle any other exceptions that may occur
             return Response({
                 'error': 'An unexpected error occurred', 
                 'details': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-# Actions Retrieve, update, or delete an action
 @method_decorator(ensure_csrf_cookie, name='dispatch')
-class ActionDetailAPIView(APIView):
+class ActionDetailAPI(APIView):
+    # Handles retrieving, updating, and deleting a specific action for authenticated users
     permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
         return get_object_or_404(Action, pk=pk)
 
     def get(self, request, pk):
-        action     = self.get_object(pk)
+        action = self.get_object(pk)
         serializer = ActionSerializer(action)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        action     = self.get_object(pk)
+        action = self.get_object(pk)
         serializer = ActionSerializer(action, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -140,16 +147,17 @@ class ActionDetailAPIView(APIView):
         action = self.get_object(pk)
         action.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
 # TestResult
-class TestResultListAPIView(APIView):
+class TestResultListAPI(APIView):
+    # Handles listing recent test results and creating new ones for authenticated users
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         one_hour_ago = timezone.now() - timezone.timedelta(hours=1)
-        action_id = request.query_params.get('action_id')
+        action_id = request.query_params.get('action')
         if action_id:
-            test_results = TestResult.objects.filter(action_id=action_id,timestamp__gte=one_hour_ago)
+            test_results = TestResult.objects.filter(action_id=action_id, timestamp__gte=one_hour_ago)
         else:
             test_results = TestResult.objects.filter(timestamp__gte=one_hour_ago)
         serializer = TestResultSerializer(test_results, many=True)
@@ -162,8 +170,10 @@ class TestResultListAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class TestResultDetailAPIView(APIView):
+class TestResultDetailAPI(APIView):
+    # Handles retrieving, updating, and deleting a specific test result for authenticated users
     permission_classes = [IsAuthenticated]
+
     def get_object(self, pk):
         try:
             return TestResult.objects.get(pk=pk)
@@ -194,16 +204,22 @@ class TestResultDetailAPIView(APIView):
         test_result.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class ActionRunNowAPIView(APIView):
+class ActionRunNowAPI(APIView):
+    # Handles running an action immediately for authenticated users
     permission_classes = [IsAuthenticated]
+
     def post(self, request, action_id):
         try:
-            # Run the asynchronous Playwright function synchronously for immediate execution
+            action = get_object_or_404(Action, pk=action_id)
             response = run_playwright_action(action_id)
-            return Response({'message': f'Action {action_id} executed successfully','response':response}, status=status.HTTP_200_OK)
+            response['url'] = action.sensor.url + action.action_path
+            return Response({
+                'message': f'Action {action_id} executed successfully',
+                'response': response
+            }, status=status.HTTP_200_OK)
         except Action.DoesNotExist as exc:
-            logger.error(f"ActionRunNowAPIView DoesNotExist {exc}")
+            logger.error(f"ActionRunNowAPI DoesNotExist {exc}")
             return Response({'error': 'Action not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as exc:
-            logger.error(f"ActionRunNowAPIView Exception {exc}")
+            logger.error(f"ActionRunNowAPI Exception {exc}")
             return Response({'error': 'An unexpected error occurred', 'details': str(exc)}, status=status.HTTP_400_BAD_REQUEST)

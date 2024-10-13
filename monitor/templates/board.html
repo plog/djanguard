@@ -76,7 +76,7 @@
             renderTimeline(actionId, window.testResultsCache[actionId]);
         }else{
             $.ajax({
-                url: `/api/test-result/?action_id=${actionId}`, // Using the correct API endpoint for test results
+                url: `/api/test-result/?action=${actionId}`,
                 type: 'GET',
                 success: function(result) {
                     window.testResultsCache[actionId] = result;
