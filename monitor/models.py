@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import User
+
 import json
 
 HTTP_VERBS = [
@@ -38,13 +40,14 @@ class Action(models.Model):
         return json.dumps(self.payload, indent=4)
 
 class Sensor(models.Model):
+    user      = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sensors')
     name      = models.CharField(max_length=100)
     url       = models.URLField(max_length=200)
     favico    = models.CharField(null=True, blank=True)
     frequency = models.IntegerField(help_text="Frequency in minutes to check the website")
 
-    def get_actions_count(self, obj):
-        return obj.actions.count()  # Count the related actions using the related name 'actions'
+    def get_actions_count(self):
+        return self.actions.count()
     
     def __str__(self):
         return self.name

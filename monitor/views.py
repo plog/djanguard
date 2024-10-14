@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.shortcuts import get_object_or_404
+from django.core.exceptions import PermissionDenied
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 
@@ -26,13 +27,6 @@ logger = logging.getLogger('django')
 class BoardView(LoginRequiredMixin, TemplateView):
     # Displays the main board page for logged-in users
     template_name = 'board.html'
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
-
-class SensorListView(LoginRequiredMixin, TemplateView):
-    # Displays the list of sensors for logged-in users
-    template_name = 'sensor_list.html'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context
@@ -65,7 +59,7 @@ class SensorListCreateAPI(ListCreateAPIView):
 
     def get_queryset(self):
         search_term = self.request.headers.get('search', None)
-        queryset = Sensor.objects.all()
+        queryset = Sensor.objects.filter(user=self.request.user)
         if search_term:
             queryset = queryset.filter(name__icontains=search_term)
         return queryset
@@ -76,7 +70,10 @@ class SensorDetailAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
-        return get_object_or_404(Sensor, pk=pk)
+        sensor = get_object_or_404(Sensor, pk=pk)
+        if sensor.user != self.request.user:
+                raise PermissionDenied("You do not have permission to access this sensor.")
+        return sensor
 
     def get(self, request, pk):
         sensor = self.get_object(pk)
@@ -105,7 +102,7 @@ class ActionListCreateAPI(ListCreateAPIView):
 
     def get_queryset(self):
         sensor_id = self.request.query_params.get('sensor', None)
-        queryset = Action.objects.order_by('id').all()
+        queryset = Action.objects.filter(sensor__user=self.request.user).order_by('id')
         if sensor_id:
             queryset = queryset.filter(sensor_id=sensor_id)
         return queryset

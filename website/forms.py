@@ -6,9 +6,9 @@ import time
 from .models import ContactMessage  # Import the ContactMessage model
 
 class ContactForm(forms.Form):
-    name = forms.CharField(max_length=100, required=True)
-    email = forms.EmailField(required=True)
-    message = forms.CharField(widget=forms.Textarea, required=True)
+    name      = forms.CharField(max_length=100, required=True)
+    email     = forms.EmailField(required=True)
+    message   = forms.CharField(widget=forms.Textarea, required=True)
     timestamp = forms.IntegerField(widget=forms.HiddenInput())  # Hidden field for time validation
 
     def __init__(self, *args, **kwargs):

@@ -1,0 +1,7 @@
+footer > div > a{
+    color:black;
+    text-decoration: none;
+}
+footer > div > a:visited{
+    color:black;
+}

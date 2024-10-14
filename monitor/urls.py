@@ -18,7 +18,6 @@ urlpatterns = [
 
     # Pages
     path('board/', views.BoardView.as_view(), name='web_board'),
-    path('sensor/', views.SensorListView.as_view(), name='web_sensor_list'),
     path('sensor/add', views.SensorAddView.as_view(), name='web_sensor_add'),
     path('sensor/<int:pk>/', views.SensorDetailView.as_view(), name='web_sensor_detail'),
 ]

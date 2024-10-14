@@ -39,7 +39,7 @@ $(document).ready(function() {
             data: JSON.stringify(data),
             success: function(response) {
                 alert('Sensor created successfully!');
-                window.location.href = '/sensor/';
+                window.location.href = '/board/';
             },
             error: function(error) {
                 console.error('Error creating sensor:', error);

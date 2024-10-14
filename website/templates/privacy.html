@@ -5,58 +5,45 @@
 
 <div class="row">
     <div class="col-md-10">
-        <h1 class="display-4 mb-4">{% trans "Privacy Policy" %}</h1>
-        <p class="lead">{% trans "Effective Date: January 1, 2024" %}</p>
+        <h1 class="mb-4">Privacy Policy</h1>
+        <p class="lead">We value your privacy and are committed to protecting your personal information. This
+            Privacy Policy explains how we collect, use, and safeguard your data when you use our Django
+            application to monitor websites and APIs. By using our services, you agree to the terms outlined
+            here.</p>
 
-        <h2 class="mt-5">{% trans "Introduction" %}</h2>
-        <p>
-            {% trans "We are committed to protecting your privacy and ensuring responsible use of your data while using our Proctoring Extension. This policy explains what data we collect, how we use it, and how we ensure it is protected." %}
-        </p>
+        <h3>1. Information We Collect</h3>
+        <p><strong>User-Provided Information:</strong> When you sign up or input URLs for monitoring, we collect
+            information such as your name, email address, and website details.</p>
+        <p><strong>Automatically Collected Information:</strong> We gather data such as your IP address, browser
+            type, and usage information to enhance our service performance.</p>
 
-        <h2 class="mt-4">{% trans "Data We Collect" %}</h2>
-        <p>
-            {% trans "Our extension collects the following information during online exams to ensure exam integrity:" %}
-        </p>
+        <h3>2. How We Use Your Information</h3>
         <ul>
-            <li>{% trans "Webcam access to monitor the student's environment." %}</li>
-            <li>{% trans "Screen sharing to ensure only authorized content is accessed." %}</li>
-            <li>{% trans "Geolocation to verify compliance with exam location requirements." %}</li>
-            <li>{% trans "Tab activity to detect navigation to unauthorized websites." %}</li>
-            <li>{% trans "Clipboard access to monitor copy-paste actions." %}</li>
-            <li>{% trans "Display information to prevent multi-screen cheating." %}</li>
+            <li>To provide and maintain our service, including monitoring uptime and analyzing website
+                performance.</li>
+            <li>To communicate with you regarding updates, notifications, or technical issues.</li>
+            <li>To improve user experience by analyzing usage patterns and troubleshooting.</li>
         </ul>
 
-        <h2 class="mt-4">{% trans "How We Use Your Data" %}</h2>
-        <p>
-            {% trans "The data we collect is used exclusively to monitor and ensure the integrity of online exams. It is not shared with third parties or used for any other purpose." %}
-        </p>
+        <h3>3. Sharing of Information</h3>
+        <p>We do not sell or share your personal data with third parties except as required by law or to protect
+            the rights and security of our application and users.</p>
 
-        <h2 class="mt-4">{% trans "Data Security" %}</h2>
-        <p>
-            {% trans "We use industry-standard encryption (HTTPS) to securely transmit data. We also implement strict access controls to protect your data from unauthorized access or disclosure." %}
-        </p>
+        <h3>4. Data Security</h3>
+        <p>We employ industry-standard security measures, such as encryption and secure data storage, to protect
+            your information. Access to your data is restricted to authorized personnel only.</p>
 
-        <h2 class="mt-4">{% trans "Data Retention" %}</h2>
-        <p>
-            {% trans "We retain the data only for the duration of the exam and any necessary review. After the review, all data is permanently deleted." %}
-        </p>
+        <h3>5. User Rights</h3>
+        <p>You have the right to access, correct, or delete your personal information. If you wish to make any
+            changes, please contact us, and we will take the necessary actions as soon as possible.</p>
 
-        <h2 class="mt-4">{% trans "Your Rights" %}</h2>
-        <p>
-            {% trans "You have the right to access the data collected during your exam and request its deletion once the exam is completed. To exercise these rights, please contact the exam administrator." %}
-        </p>
+        <h3>6. Changes to This Policy</h3>
+        <p>We may update this Privacy Policy periodically to reflect changes in our practices or legal
+            obligations. We will notify you of any significant updates.</p>
 
-        <h2 class="mt-4">{% trans "Changes to This Policy" %}</h2>
-        <p>
-            {% trans "We reserve the right to update this Privacy Policy. Any changes will be communicated to users and will take effect immediately." %}
-        </p>
+        <h3>7. Contact Us</h3>
+        <p>If you have questions or concerns about this Privacy Policy, please <a href="{% url 'contact'%}">reach out to us</a>
 
-        <h2 class="mt-4">{% trans "Contact Us" %}</h2>
-        <p>
-            {% trans "If you have any questions or concerns about this Privacy Policy, please" %} <a href="{% url 'contact' %}">{%trans "contact us" %}</a>
-        </p>
-
-        <p class="text-muted mt-5">{% trans "&copy; 2024 Proctoring Extension. All rights reserved." %}</p>
     </div>
 </div>
 
