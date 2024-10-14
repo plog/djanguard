@@ -25,19 +25,19 @@
                 sensors.forEach(sensor => {
                     $('#sensor-container').append(`
                         <div class="col-12 col-sm-6 col-lg-4 mb-3">
-                            <div class="card shadow-sm">
+                            <div class="card box">
                                 <div class="card-header pt-3">
                                     <h5 class="card-title">
                                         <img src="${sensor.favico}" height="15">
                                         ${sensor.name}&nbsp;
                                         <a href="/sensor/${sensor.id}/"><i class="bi bi-pencil-square"></i></a>
-                                        <i class="bi bi-play-circle-fill"></i>
+                                        <a href=""><i class="bi bi-play-circle-fill"></a></i>
                                     </h5>
                                 </div>
                                 <div class="card-body">
                                     <p class="card-text">
                                         <a href="${sensor.url}" class="sensor_url">${sensor.short_url}</a>
-                                        &nbsp;(${sensor.frequency} s.)
+                                        <span class="frequency">&nbsp;(${sensor.frequency} s.)</span>
                                     </p>
                                     <div id="actions-${sensor.id}"></div>
                                 </div>
@@ -99,20 +99,22 @@
 
     function renderTimeline(actionId, testResults) {
         const chartElement = d3.select(`#chart-action-${actionId}`);
+        chartElement.style.display = 'none';
         chartElement.html(""); // Clear previous chart
 
         if(testResults.length == 0){
             chartElement.html("No data");
+            chartElement.style.display = 'block';
             return
         }
 
         const margin = {top: 0, right: 25, bottom: 20, left: 0};
-        const width  = chartElement.node().parentNode.clientWidth - margin.left - margin.right;
+        const width  = (chartElement.node().parentNode.clientWidth - margin.left - margin.right);
         const height = 25 - margin.top - margin.bottom;
 
         const svg = chartElement
             .append("svg")
-            .attr("width"   , width + margin.left + margin.right)
+            .attr("width"   , (width + margin.left + margin.right))
             .attr("height"  , height + margin.top + margin.bottom)
             .attr("viewBox" , `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
             .attr("preserveAspectRatio", "xMinYMin meet")
@@ -126,8 +128,21 @@
             action_id  : parseInt(result.action),
             timestamp  : formatDate(result.timestamp),
             value      : result.actual_value,
+            body       : result.body
         }));
-        console.log("DATA",data)
+
+         // Create a tooltip div (hidden by default)
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("position", "absolute")
+            .style("padding", "5px")
+            .style("background", "rgba(0, 0, 0, 0.7)")
+            .style("color", "#fff")
+            .style("border-radius", "3px")
+            .style("pointer-events", "none")
+            .style("opacity", 0); // Hidden initially
+
+        // console.log("DATA",data)
         const x = d3.scaleTime()
             .domain(d3.extent(data, d => d.timestamp))
             .range([0, width]);
@@ -150,20 +165,44 @@
             .attr("y", 0)
             .attr("width", 3) // Fixed width for better visibility of events
             .attr("height", height)
-            .attr("fill", d => colorScale(d.value));
+            .attr("fill", d => colorScale(d.value))
+            .on("mouseover", function (event, d) {
+                const content = d.body ? d.body : d.value;
+                tooltip.transition().duration(200).style("opacity", 0.8);
+                tooltip.html(`${content}`)
+                    .style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mousemove", function (event) {
+                tooltip.style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function () {
+                tooltip.transition().duration(500).style("opacity", 0);
+            });
+
+        chartElement.style.display = 'block';
     }
 
     function resizeAllCharts() {
-        clearTimeout(window.resizeTimeout);
-        window.resizeTimeout = setTimeout(() => {
-            d3.selectAll(".chart-container").each(function() {
-                const actionId = this.id.split("-action-")[1];
-                if (window.testResultsCache && window.testResultsCache[actionId]) {
-                    renderTimeline(actionId, window.testResultsCache[actionId]);
-                }
-            });
-        }, 150);
-    }
+    // Add the 'hidden' class to trigger the fade-out effect
+    d3.selectAll(".chart-container").classed("hidden", true);
+
+    clearTimeout(window.resizeTimeout);
+    window.resizeTimeout = setTimeout(() => {
+        d3.selectAll(".chart-container").each(function() {
+            const actionId = this.id.split("-action-")[1];
+            if (window.testResultsCache && window.testResultsCache[actionId]) {
+                renderTimeline(actionId, window.testResultsCache[actionId]);
+            }
+        });
+
+        // Remove the 'hidden' class to trigger the fade-in effect after re-rendering
+        setTimeout(() => {
+            d3.selectAll(".chart-container").classed("hidden", false);
+        }, 150); // Add a small delay to ensure renderTimeline has enough time to finish
+    }, 150);
+}
 
 
 </script>
