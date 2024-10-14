@@ -60,8 +60,19 @@ h3.board {
     padding: 0px 0 10px 0;
 }
 
+.card-header{
+    background-color: #cdd8e7;
+}
+
 #test-result h3{
     margin-top:10px;
+}
+
+.action-graph {
+    background-color: #f8f8f8;
+    margin-bottom: 10px;
+    padding: 13px 0px 0px 10px;
+    border: 1px solid #a9a9a9;
 }
 
 .bi-arrow-clockwise::before{

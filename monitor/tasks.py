@@ -12,6 +12,7 @@ import asyncio
 import logging
 import aiohttp
 import json
+import traceback
 import re
 
 logger = logging.getLogger('celery_process')
@@ -101,63 +102,45 @@ async def async_run_playwright_action(action_id):
 
 
     # If the action is a simple status code check, use aiohttp for efficiency
-    if action.assertion_type == 'status_code':
-        async with aiohttp.ClientSession() as session:
-            headers = json.loads(action.payload).get('headers', {}) if action.payload else {}
-            data    = json.loads(action.payload).get('data', {}) if action.payload else {}
-            async with session.request(method=action.action_type, url=action.sensor.url + action.action_path, headers=headers, json=data) as response:
-                actual_value = str(response.status)
-                logger.info(f'      {action.action_name} status_code:{actual_value}')
-                test_result = TestResult(
-                    action=action,
-                    test_type='status_code',
-                    expected_value=action.expected_value,
-                    actual_value=actual_value,
-                    timestamp=timezone.now(),
-                )
-                await sync_to_async(test_result.save)()
+    if action.assertion_type in ['status_code','contains_keyword']:
+        test_result = TestResult(
+            action         = action,
+            test_type      = action.assertion_type,
+            expected_value = action.expected_value,
+            timestamp=timezone.now(),
+        )        
+        try:
+            async with aiohttp.ClientSession() as session:
+                headers = json.loads(action.payload).get('headers', {}) if action.payload else {}
+                data    = json.loads(action.payload).get('data', {}) if action.payload else {}
+                async with session.request(method=action.action_type, url=action.sensor.url + action.action_path, headers=headers, json=data) as response:
+                    if action.assertion_type =='contains_keyword':
+                        response_text = await response.text()
+                        if test_result.expected_value in response_text:
+                            test_result.actual_value = 'pass'
+                            await sync_to_async(test_result.save)()
+                            logger.info(f'      {action.action_name} found:{test_result.expected_value}')
+                        else:
+                            test_result.actual_value = 'fail'
+                            await sync_to_async(test_result.save)()
+                            logger.error(f'      {action.action_name} Not found:{test_result.expected_value}')
+                    else:
+                        actual_value = str(response.status)
+                        test_result.actual_value = actual_value
+                        await sync_to_async(test_result.save)()
+                        logger.info(f'      {action.action_name} status_code:{actual_value}')
+                        
+        except Exception as exc:
+            test_result.actual_value = '500'
+            test_result.body         = exc
+            logger.error(exc)
+            logger.error(traceback.format_exc())
 
     # Selenium Style script
     elif action.assertion_type == 'selenium':
         executor    = DSLExecutor(action)
         test_result = await executor.execute()
 
-   # Assertion: Element Exists
-    elif action.assertion_type == 'element_exists':
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page    = await browser.new_page()
-
-            sensor_url  = action.sensor.url
-            action_path = action.action_path
-            start_url   = f"{sensor_url}{action_path}"
-            logger.info(f'Opening start URL: {start_url}')
-            await page.goto(start_url, timeout=10000)
-            logger.info(get_favicon(page))
-
-            if action.selector:
-                test_result = TestResult(
-                    action        = action,
-                    test_type     = action.assertion_type,
-                    expected_value= action.expected_value,
-                    timestamp     = timezone.now()
-                )                
-                try:
-                    await page.wait_for_selector(action.selector, timeout=5000)
-                    actual_value = 'Element Found'
-                    test_result.actual_value = actual_value
-                except Exception:
-                    actual_value             = 'Element Not Found'
-                    page_content             = await page.content()
-                    soup                     = BeautifulSoup(page_content, 'html.parser')
-                    clean_text               = re.sub(r'\s+', ' ', soup.get_text()[:300]).strip()
-                    test_result.body         = clean_text
-                    test_result.actual_value = actual_value
-                    logger.error(f'{action.action_name} keyword:{actual_value}')
-
-            # Close the browser
-            await browser.close()
-            
     if test_result:
         await sync_to_async(test_result.save)()
     else:

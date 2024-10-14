@@ -101,10 +101,8 @@ function formatDate(dateString) {
     try {
         const timezone = localStorage.getItem('selectedTimezone') || 'UTC';
         const tz = moment.utc(dateString).tz(timezone);
-        console.log(dateString, '---', tz.format()); // Display the timestamp with timezone info for verification
         return tz.toDate(); // Use .toDate() if you need a Date object, otherwise return tz directly if using d3
     } catch (error) {
-        console.error(error);
         return new Date(dateString); // Fallback to the original date if there's an error
     }
 }

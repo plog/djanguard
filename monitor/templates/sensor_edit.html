@@ -281,10 +281,11 @@ $(document).ready(function() {
                     console.log(resp, resp.expected_value, resp.actual_value);
 
                     let html = `<h3>${msg}</h3>`;
-                    html += resp.expected_value === resp.actual_value
-                        ? '<p>&nbsp;</p><p><img src="/static/img/pass.png" width="90"></p>'
-                        : '<p>&nbsp;</p><p><img src="/static/img/fail.png" width="90"></p>';
-
+                    if(resp.expected_value === resp.actual_value || resp.actual_value == 'pass'){
+                        html +='<p>&nbsp;</p><p><img src="/static/img/pass.png" width="90"></p>';
+                    }else{
+                        '<p>&nbsp;</p><p><img src="/static/img/fail.png" width="90"></p>';
+                    }
                     $('#test-result').html(`${html}<br><br><pre>${JSON.stringify(resp, null, 2)}</pre>`);                    
                     
 

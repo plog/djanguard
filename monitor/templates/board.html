@@ -26,8 +26,9 @@
                     $('#sensor-container').append(`
                         <div class="col-12 col-sm-6 col-lg-4 mb-3">
                             <div class="card shadow-sm">
-                                <div class="card-header">
+                                <div class="card-header pt-3">
                                     <h5 class="card-title">
+                                        <img src="${sensor.favico}" height="15">
                                         ${sensor.name}&nbsp;
                                         <a href="/sensor/${sensor.id}/"><i class="bi bi-pencil-square"></i></a>
                                         <i class="bi bi-play-circle-fill"></i>
@@ -35,9 +36,8 @@
                                 </div>
                                 <div class="card-body">
                                     <p class="card-text">
-                                        <img src="${sensor.favico}" height="15">
-                                        <a href="${sensor.url}" class="sensor_url">${sensor.short_url}</a><br>
-                                        Every ${sensor.frequency} seconds
+                                        <a href="${sensor.url}" class="sensor_url">${sensor.short_url}</a>
+                                        &nbsp;(${sensor.frequency} s.)
                                     </p>
                                     <div id="actions-${sensor.id}"></div>
                                 </div>
@@ -60,8 +60,10 @@
             success: function(actions) {
                 actions.forEach(action => {
                     $(`#actions-${sensorId}`).append(`
-                        <h3 class="board">${action.action_name} (${action.action_type})</h3>
-                        <div id="chart-action-${action.id}" class="chart-container" style="height: 50px; width: 90%;"></div>
+                        <div class="action-graph">
+                            <h3 class="board">${action.action_name} (${action.action_type})</h3>
+                            <div id="chart-action-${action.id}" class="chart-container" style="height: 30px; width: 90%;"></div>
+                        </div>
                     `);
                     fetchTestResults(action.id);
                 });
@@ -104,15 +106,15 @@
             return
         }
 
-        const margin = {top: 5, right: 0, bottom: 20, left: 0};
-        const width = chartElement.node().parentNode.clientWidth - margin.left - margin.right;
-        const height = 35 - margin.top - margin.bottom;
+        const margin = {top: 0, right: 25, bottom: 20, left: 0};
+        const width  = chartElement.node().parentNode.clientWidth - margin.left - margin.right;
+        const height = 25 - margin.top - margin.bottom;
 
         const svg = chartElement
             .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+            .attr("width"   , width + margin.left + margin.right)
+            .attr("height"  , height + margin.top + margin.bottom)
+            .attr("viewBox" , `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
             .attr("preserveAspectRatio", "xMinYMin meet")
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -120,17 +122,15 @@
         const parseTime = d3.isoParse;
 
         const data = testResults.map(result => ({
-            id: parseInt(result.id),
-            action_id: parseInt(result.action),
-            // timestamp: parseTime(result.timestamp),
-            timestamp: formatDate(result.timestamp),
-            value: result.actual_value,
+            id         : parseInt(result.id),
+            action_id  : parseInt(result.action),
+            timestamp  : formatDate(result.timestamp),
+            value      : result.actual_value,
         }));
-
+        console.log("DATA",data)
         const x = d3.scaleTime()
             .domain(d3.extent(data, d => d.timestamp))
             .range([0, width]);
-
             svg.append("g")
             .attr("transform", `translate(0,${height})`)
             .call(d3.axisBottom(x).ticks(5).tickFormat(d => {
@@ -139,8 +139,8 @@
             }));
 
         const colorScale = d3.scaleOrdinal()
-            .domain(["200", "403", "500", "404"])
-            .range(["green", "orange", "red", "red"]);
+            .domain(["200"  , "403"   , "500", "404", "fail"])
+            .range(["green" , "orange", "red", "red", "red"]);
 
         svg.selectAll("rect")
             .data(data)

@@ -130,7 +130,7 @@ class DSLExecutor:
         testResult = TestResult(
             action         = self.action,
             test_type      = 'script_execution',
-            actual_value   = 'failed',
+            actual_value   = 'fail',
             expected_value = 'pass',
             timestamp=timezone.now()
         )        
@@ -188,7 +188,7 @@ class DSLExecutor:
                         i += 1
 
                 except Exception as e:
-                    testResult.actual_value = 'failed'
+                    testResult.actual_value = 'fail'
                     logger.error(f'Error occurred: {str(e)}')
                     page_content     = await page.content()
                     soup             = BeautifulSoup(page_content, 'html.parser')
