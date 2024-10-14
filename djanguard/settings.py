@@ -70,6 +70,7 @@ ALLOWED_HOSTS = [
     '172.18.0.11',
     '141.95.99.27',
     '10.11.12.100',
+    'djanguard.com',
     'localhost'
 ]
 

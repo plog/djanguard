@@ -188,12 +188,13 @@ class DSLExecutor:
                         i += 1
 
                 except Exception as e:
-                    testResult.actual_value = 'fail'
                     logger.error(f'Error occurred: {str(e)}')
                     page_content     = await page.content()
                     soup             = BeautifulSoup(page_content, 'html.parser')
                     clean_text       = re.sub(r'\s+', ' ', soup.get_text()[:300]).strip()
-                    testResult.body  = clean_text  # Store part of the page content without HTML tags
+                    
+                    testResult.actual_value = 'fail'
+                    testResult.body         = clean_text  # Store part of the page content without HTML tags
                     await browser.close()
                     return testResult
             
