@@ -59,7 +59,7 @@ class SensorListCreateAPI(ListCreateAPIView):
 
     def get_queryset(self):
         search_term = self.request.headers.get('search', None)
-        queryset = Sensor.objects.filter(user=self.request.user)
+        queryset = Sensor.objects.filter(user=self.request.user).order_by('id')
         if search_term:
             queryset = queryset.filter(name__icontains=search_term)
         return queryset

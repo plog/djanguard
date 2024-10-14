@@ -14,7 +14,7 @@ class SensorSerializer(serializers.ModelSerializer):
 
     def get_short_url(self, obj):
         if hasattr(obj, 'url'):
-            return obj.url[:30]+'...'
+            return obj.url[:20]+'...'
         return ''        
     
 class ActionSerializer(serializers.ModelSerializer):
