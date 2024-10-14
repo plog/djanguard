@@ -29,3 +29,4 @@ setuptools
 sqlparse
 watchdog
 whitenoise
+google-api-python-client

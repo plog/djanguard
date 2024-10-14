@@ -5,9 +5,9 @@
 
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-4">
+        <div class="col-md-5 justify-content-center">
             <h2 class="text-center">Login</h2>
-            <form method="post">
+            <form class="text-center" method="post">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="id_username">Username:</label>
@@ -17,8 +17,34 @@
                     <label for="id_password">Password:</label>
                     <input type="password" class="form-control" id="id_password" name="password" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block mt-3">Login</button>
+
+                <div class="row">
+                    <div class="col">
+                        <button type="submit" class="btn btn-primary btn-block mt-3">Login</button>
+                    </div>
+                    <div class="col pt-3">
+                        <div id="g_id_onload"
+                        data-client_id="87502523390-fi0phu1u5iltbjqq36o297025rlpur4s.apps.googleusercontent.com"
+                        data-context="signin"
+                        data-ux_mode="redirect"
+                        data-login_uri="https://djanguard.bali.plog.net/google-auth"
+                        data-itp_support="true">
+                   </div>
+                   
+                   <div class="g_id_signin"
+                        data-type="icon"
+                        data-shape="circle"
+                        data-theme="outline"
+                        data-text="signin_with"
+                        data-size="large">
+                   </div>
+
+                    </div>
+                </div>
+
+
             </form>
+
         </div>
     </div>
 </div>

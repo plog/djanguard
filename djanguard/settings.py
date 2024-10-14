@@ -9,7 +9,16 @@ ADMIN_URL             = config('ADMIN_URL')
 LOGIN_REDIRECT_URL    = '/board/'
 LOGOUT_REDIRECT_URL   = LOGIN_REDIRECT_URL
 LOGIN_URL             = f'/accounts/login/?next={LOGIN_REDIRECT_URL}'
+GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID')
+if not GOOGLE_OAUTH_CLIENT_ID:
+    raise ValueError(
+        'GOOGLE_OAUTH_CLIENT_ID is missing.' 
+        'Have you put it in a file at core/.env ?'
+    )
 
+# We need these lines below to allow the Google sign in popup to work.
+SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 SECRET_KEY = 'django-insecure-z*ypnwid#cw-(*u7w4b684p$!&f9h83=j1&8v2tidz6-9+7q59'
 DEBUG = True
 
@@ -70,7 +79,7 @@ ALLOWED_HOSTS = [
     '172.18.0.11',
     '141.95.99.27',
     '10.11.12.100',
-    'djanguard.com',
+    'djanguard.com'
     'localhost'
 ]
 
