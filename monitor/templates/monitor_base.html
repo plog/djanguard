@@ -70,15 +70,13 @@
 
 
 <footer class="fixed-bottom p-3 bg-dark-subtle">
-    <div class="container">
-            {% if user.is_staff %}
-            Staff access
-            {% endif %}
-
-            {% if user.is_superuser %}
-            - Superuser access
-            {% endif %}
-            - Country: {{ country_code }}
+    <div class="container text-center">
+            {% if user.is_staff %}User -{% endif %}
+            {% if user.is_superuser %}Superuser -{% endif %}
+            <a href="{% url 'home'%}">Home</a> -   
+            <a href="{% url 'privacy'%}">Privacy</a> -     
+            <a href="{% url 'web_board'%}">My Board</a> - 
+            <a href="{% url 'contact'%}">Contact us</a>
     </div>
 </footer>
 

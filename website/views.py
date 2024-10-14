@@ -5,8 +5,8 @@ from django.urls import reverse_lazy
 
 class ContactFormView(FormView):
     template_name = 'contact/contact_form.html'  # Your contact form template
-    form_class = ContactForm
-    success_url = reverse_lazy('contact_success')  # URL to redirect to after successful form submission
+    form_class    = ContactForm
+    success_url   = reverse_lazy('contact_success')  # URL to redirect to after successful form submission
 
     def form_valid(self, form):
         # Save the form data to the database
