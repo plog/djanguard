@@ -13,13 +13,13 @@
                 <div class="col">
                     <div class="mb-2">
                         <label for="name" class="form-label">Name:</label>
-                        <input type="text" id="name" name="name" class="form-control  form-control-sm" value="{{ sensor.name }}" required>
+                        <input type="text" onkeypress="return onlyAlphaNumericKey(event)" id="name" name="name" class="form-control  form-control-sm" value="{{ sensor.name }}" required>
                     </div>                    
                 </div>
                 <div class="col-5">
                     <div class="mb-2">
                         <label for="frequency" class="form-label">Frequency:</label>
-                        <input type="number" id="frequency" name="frequency" class="form-control  form-control-sm" value="{{ sensor.frequency }}" required>
+                        <input type="number" onkeypress="return onlyNumberKey(event)" id="frequency" name="frequency" class="form-control  form-control-sm" value="{{ sensor.frequency }}" required>
                     </div>                    
                 </div>
             </div>
@@ -31,7 +31,14 @@
                     </div>
                 </div>
                 <div class="col-5">
-                    <button type="button" id="update-sensor" class="btn btn-primary btn-sm mt-4">Save</button>
+                    <div class="row">
+                        <div class="col-4">
+                            <button type="button" id="update-sensor" class="btn btn-primary btn-sm mt-4">Save</button>
+                        </div>
+                        <div class="col-1" style="padding-top: 1.30rem !important;">
+                            <i class="bi bi-check-circle" style="color:green; display: none;font-size: x-large;" id="updated-sensor" ></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -109,8 +116,17 @@
                     <textarea id="payload" name="payload" class="form-control form-control-sm" rows="5"></textarea>
                 </div>
 
-                <button type="button" id="save-action" class="btn btn-sm btn-primary">Save Action</button>
-                <button type="button" id="test-action" class="btn btn-sm btn-primary">Test Action</button>
+                <div class="row">
+                    <div class="col-2 pt-1">
+                        <button type="button" id="save-action" class="btn btn-sm btn-primary">Save</button>
+                    </div>
+                    <div class="col-2 pt-1">
+                        <button type="button" id="test-action" class="btn btn-sm btn-primary">Test</button>
+                    </div>                    
+                    <div class="col-1 pt-0">
+                        <i class="bi bi-check-circle" style="color:green; display: none;font-size: x-large;" id="updated-action" ></i>
+                    </div>
+                </div>
                 
             </form>
         </div>
@@ -135,6 +151,7 @@
 </div>
 
 <script>
+const user = {{request.user.id}};
 $(document).ready(function() {
     const sensorId = parseInt('{{ sensor.id }}');
     // Update Sensor properties
@@ -143,6 +160,7 @@ $(document).ready(function() {
             name: $('#sensor-edit-form #name').val(),
             url: $('#sensor-edit-form #url').val(),
             frequency: $('#sensor-edit-form #frequency').val(),
+            user:user
         };
         $.ajax({
             url: `/api/sensor/${sensorId}/`,
@@ -152,6 +170,7 @@ $(document).ready(function() {
             data: JSON.stringify(data),
             success: function(response) {
                 console.log('Sensor updated successfully!');
+                $('#updated-sensor').show().delay(2000).fadeOut();
             },
             error: function(error) {
                 console.error('Error updating sensor:', error);
@@ -248,7 +267,7 @@ $(document).ready(function() {
                 console.log('Action saved successfully!');
                 loadActions();
                 if (callback) callback(response.id);
-                // clearActionForm()
+                $('#updated-action').show().delay(2000).fadeOut();;
             },
             error: function(error) {
                 console.error('Error saving action:', error);
@@ -270,25 +289,24 @@ $(document).ready(function() {
         const actionId = $('#action-id').val();
         $('#test-result').html('');
         saveAction(function(actionId) {
+            $('#updated-action').show().delay(2000).fadeOut();;
             // Then, execute the test action
             $.ajax({
                 url: `/api/action/${actionId}/run/`,
                 type: 'POST',
                 headers: {'X-CSRFToken': Cookies.get('csrftoken')},
                 success: function(response) {
-
                     const { response: resp, message: msg } = response;
-                    console.log(resp, resp.expected_value, resp.actual_value);
-
                     let html = `<h3>${msg}</h3>`;
                     if(resp.expected_value === resp.actual_value || resp.actual_value == 'pass'){
                         html +='<p>&nbsp;</p><p><img src="/static/img/pass.png" width="90"></p>';
+                        console.log("PASS",resp, resp.expected_value, resp.actual_value,"/static/img/pass.png");
                     }else{
                         '<p>&nbsp;</p><p><img src="/static/img/fail.png" width="90"></p>';
+                        console.log("FAIL",resp, resp.expected_value, resp.actual_value,"/static/img/fail.png");
                     }
-                    $('#test-result').html(`${html}<br><br><pre>${JSON.stringify(resp, null, 2)}</pre>`);                    
-                    
-
+                    $('#test-result').html(html)
+                    $('#test-result').append(`<br><br><pre>${JSON.stringify(resp, null, 2)}</pre>`);                    
                 },
                 error: function(xhr, status, error) {
                     $('#test-result').html(xhr.responseJSON.error)

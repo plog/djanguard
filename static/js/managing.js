@@ -146,6 +146,35 @@ function displaySensors(sensors) {
     spin('none');
 }
 
+function onlyNumberKey(evt) {
+    // Only ASCII character in that range allowed
+    let ASCIICode = (evt.which) ? evt.which : evt.keyCode
+    if (ASCIICode > 31 && (ASCIICode < 48 || ASCIICode > 57))
+        return false;
+    return true;
+}
+
+function onlyAlphaNumericKey(evt) {
+    // Get the ASCII code of the key pressed
+    let ASCIICode = (evt.which) ? evt.which : evt.keyCode;
+    // Allow control keys like backspace (ASCII < 32)
+    if (ASCIICode < 32) {
+        return true;
+    }
+    // Allow numbers (48-57), uppercase letters (65-90), lowercase letters (97-122), dash (45), and underscore (95)
+    if (
+        (ASCIICode >= 48 && ASCIICode <= 57) ||    // Numbers 0-9
+        (ASCIICode >= 65 && ASCIICode <= 90) ||    // Uppercase letters A-Z
+        (ASCIICode >= 97 && ASCIICode <= 122) ||   // Lowercase letters a-z
+        ASCIICode === 32 ||                        // Space
+        ASCIICode === 45 ||                        // Hyphen (-)
+        ASCIICode === 95) { // Underscore (_)
+        return true;
+    }
+    // Otherwise, prevent the input
+    return false;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     setupTimezoneSelector();
     const searchSensors = document.getElementById('search-sensor-input');

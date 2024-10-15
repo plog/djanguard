@@ -8,7 +8,7 @@
 <form id="sensor-create-form" class="mb-5">
     <div class="mb-3">
         <label for="name" class="form-label">Sensor Name:</label><span class="require">*</span>
-        <input type="text" id="name" name="name" class="form-control" required>
+        <input type="text" onkeypress="return onlyAlphaNumericKey(event)" id="name" name="name" class="form-control" required>
     </div>
     <div class="mb-3">
         <label for="url" class="form-label">Base URL:</label><span class="require">*</span>
@@ -16,20 +16,23 @@
     </div>
     <div class="mb-3">
         <label for="frequency" class="form-label">Frequency (minutes):</label><span class="require">*</span>
-        <input type="number" id="frequency" name="frequency" class="form-control" required>
+        <input type="number" onkeypress="return onlyNumberKey(event)" id="frequency" name="frequency" class="form-control">
     </div>
     <button type="button" id="create-sensor" class="btn btn-primary">Create Sensor</button>
 </form>
 </div>
 
 <script>
+const user = {{request.user.id}};
 $(document).ready(function() {
+    
     // Create new Sensor
     $('#create-sensor').click(function() {
         const data = {
             name: $('#sensor-create-form #name').val(),
             url: $('#sensor-create-form #url').val(),
             frequency: $('#sensor-create-form #frequency').val(),
+            user:user
         };
         $.ajax({
             url: '/api/sensor/',

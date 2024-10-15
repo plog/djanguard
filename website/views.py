@@ -14,6 +14,9 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 
 import os
+import logging
+
+logger = logging.getLogger('django')
 
 class ContactFormView(FormView):
     template_name = 'contact/contact_form.html'  # Your contact form template
@@ -35,19 +38,33 @@ class PrivacyView(TemplateView):
 @method_decorator(csrf_exempt, name='dispatch')
 class GoogleAuthView(View):
     def post(self, request, *args, **kwargs):
+        """
+        Google calls this URL after the user has signed in with their Google account.
+        """
         token = request.POST.get('credential')
         if not token:
             return HttpResponse(status=400)
+
         try:
-            user_data = id_token.verify_oauth2_token(token, requests.Request(), settings.GOOGLE_OAUTH_CLIENT_ID)
+            user_data = id_token.verify_oauth2_token(
+                token, requests.Request(), settings.GOOGLE_OAUTH_CLIENT_ID
+            )
         except ValueError:
             return HttpResponse(status=403)
 
         # Get or create the user in the database.
         email = user_data.get('email')
         if email:
-            password      = get_random_string(12)
-            user, created = User.objects.get_or_create(username=email, defaults={'email': email, 'password': password})
-            login(request, user)
-        request.session['user_data'] = user_data
-        return redirect('home')
+            password = get_random_string(12)  # Generate a random 12-character password
+            user, created = User.objects.get_or_create(username=email, defaults={'email': email})
+            if created:
+                # Set an unusable password since this user logs in via Google
+                user.set_unusable_password()
+                user.save()
+            # Log the user in and set the authentication backend.
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+        # Debugging output to check if the user is properly authenticated before redirecting
+        print(f"User logged in: {request.user.is_authenticated}, User ID: {request.user.id}")
+
+        return redirect('web_board')

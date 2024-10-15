@@ -16,7 +16,10 @@ if not GOOGLE_OAUTH_CLIENT_ID:
         'Have you put it in a file at core/.env ?'
     )
 
-# We need these lines below to allow the Google sign in popup to work.
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 SECRET_KEY = 'django-insecure-z*ypnwid#cw-(*u7w4b684p$!&f9h83=j1&8v2tidz6-9+7q59'

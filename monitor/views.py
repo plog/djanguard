@@ -42,11 +42,21 @@ class SensorDetailView(LoginRequiredMixin, TemplateView):
         return context
 
 class SensorAddView(LoginRequiredMixin, TemplateView):
-    # Displays the form for adding a new sensor
+    # Displays the form for adding a new sensor, ensuring it is owned by the connected user
     template_name = 'sensor_add.html'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        return context  
+        return context
+
+    def post(self, request, *args, **kwargs):
+        # Ensure the new sensor is owned by the connected user
+        sensor_data         = request.POST.copy()
+        sensor_data['user'] = request.user.id
+        serializer = SensorSerializer(data=sensor_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
 # API CRUD for Sensor
 # -------------------
