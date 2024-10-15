@@ -1,16 +1,20 @@
-import re
-import asyncio
-from playwright.async_api import async_playwright
 from .models import Action, TestResult, Sensor
-from django.utils import timezone
 from bs4 import BeautifulSoup
+from django.conf import settings
+from django.utils import timezone
+from playwright.async_api import async_playwright
+import asyncio
+import base64
+import hashlib
 import logging
+import re
 logger = logging.getLogger('celery_process')
 
 class CommandHandler:
     def __init__(self, page):
         self.page = page
-
+        self.secret_key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()[:16] 
+    
     async def check_element_exists(self, selector):
         logger.info(f'Checking if element exists: {selector}')
         await self.page.wait_for_selector(selector, timeout=10000)
@@ -107,8 +111,8 @@ class CommandHandler:
 
 class DSLExecutor:
     def __init__(self, action):
-        self.action   = action
-        self.commands = action.selenium_script
+        self.action           = action
+        self.commands         = action.selenium_script
         self.command_registry = [
             (r'check-element-exists "(.+?)"', 'check_element_exists'),
             (r'fill "(.+?)" with "(.+?)"', 'fill_input'),

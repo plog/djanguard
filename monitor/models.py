@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django_cryptography.fields import encrypt
 
 import json
 
@@ -30,14 +31,14 @@ class Action(models.Model):
     sensor          = models.ForeignKey('Sensor', on_delete=models.CASCADE, related_name='actions')
     assertion_type  = models.CharField(max_length=50, choices=ASSERTION_TYPES, default='status_code')
     expected_value  = models.CharField(max_length=200, help_text="The expected value for this assertion")
-    selenium_script = models.CharField(null=True, blank=True, help_text="Selenium Style script)") 
+    selenium_script = encrypt(models.TextField(null=True, blank=True, help_text="Selenium Style script"))  # Changed to TextField
     sequence        = models.IntegerField(help_text="Order of the command",default=0) 
 
     def __str__(self):
         return f"{self.action_name} ({self.get_action_type_display()})"
 
     def get_payload(self):
-        return json.dumps(self.payload, indent=4)
+        return json.dumps(self.payload, indent=4)    
 
 class Sensor(models.Model):
     user      = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sensors')

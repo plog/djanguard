@@ -149,7 +149,6 @@ async def async_run_playwright_action(action_id):
     # Serialize the TestResult to return a dictionary representation
     if test_result:
         serializer = TestResultSerializer(test_result)
-        logger.info(f"All Good ....... {serializer.data}")
         return serializer.data
     else:
         return {"message": "No test result created."}

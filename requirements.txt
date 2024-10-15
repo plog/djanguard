@@ -2,6 +2,7 @@ argparse
 asgiref
 bs4
 celery
+pycryptodome
 Django
 django-admin
 django-celery-beat
