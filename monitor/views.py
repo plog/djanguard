@@ -15,12 +15,15 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 
 from .tasks import run_playwright_action
-from .models import Action, Sensor, TestResult
+from .models import Action, Sensor, TestResult, UserProfile
 from .serializers import ActionSerializer, SensorSerializer, TestResultSerializer
 
 import logging
 
 logger = logging.getLogger('django')
+MIN_FREQUENCY = 30
+MAX_SENSORS   = 10
+MAX_ACTIONS   = 3
 
 # Pages
 #---------------------
@@ -50,13 +53,40 @@ class SensorAddView(LoginRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         # Ensure the new sensor is owned by the connected user
-        sensor_data         = request.POST.copy()
+        sensor_data = request.POST.copy()
         sensor_data['user'] = request.user.id
+
+        # Check if the user is a paying user
+        try:
+            user_profile = request.user.userprofile
+        except UserProfile.DoesNotExist:
+            user_profile = UserProfile.objects.create(user=request.user)
+
+        # Limit the number of sensors for non-paying users
+        if not user_profile.is_paying_user:
+            sensor_count = Sensor.objects.filter(user=request.user).count()
+            if sensor_count >= MAX_SENSORS:
+                return Response({'error': f'Free version can only create up to {MAX_SENSORS} sensors.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        frequency = int(sensor_data.get('frequency', 0))
+        if not user_profile.is_paying_user and frequency < MIN_FREQUENCY:
+            sensor_data['frequency'] = MIN_FREQUENCY  # Force frequency to MIN_FREQUENCY seconds if not a paying user
+
+        # Check if frequency is valid based on user's subscription
+        try:
+            user_profile = request.user.userprofile
+        except UserProfile.DoesNotExist:
+            user_profile = UserProfile.objects.create(user=request.user)
+        frequency = int(sensor_data.get('frequency', 0))
+        if not user_profile.is_paying_user and frequency < MIN_FREQUENCY:
+            return Response({'error': 'Frequency cannot be below MIN_FREQUENCY seconds for non-paying users.'}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = SensorSerializer(data=sensor_data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+
 
 # API CRUD for Sensor
 # -------------------
@@ -92,6 +122,16 @@ class SensorDetailAPI(APIView):
 
     def put(self, request, pk):
         sensor = self.get_object(pk)
+        try:
+            user_profile = request.user.userprofile
+        except UserProfile.DoesNotExist:
+            user_profile = UserProfile.objects.create(user=request.user)
+        
+        # Check if the user is a paying user
+        user_profile = request.user.userprofile
+        frequency    = int(request.data.get('frequency', sensor.frequency))
+        if not user_profile.is_paying_user and frequency < MIN_FREQUENCY:
+            request.data['frequency'] = MIN_FREQUENCY  # Force frequency to MIN_FREQUENCY seconds if not a paying user
         serializer = SensorSerializer(sensor, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -119,6 +159,14 @@ class ActionListCreateAPI(ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
+            user_profile = request.user.userprofile
+            if not user_profile.is_paying_user:
+                sensor_id = request.data.get('sensor')
+                if sensor_id:
+                    action_count = Action.objects.filter(sensor_id=sensor_id, sensor__user=request.user).count()
+                    if action_count >= MAX_ACTIONS:
+                        return Response({'error': f'Free version can only create up to {MAX_ACTIONS} actions per sensor.'}, status=status.HTTP_400_BAD_REQUEST)
+                                
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)

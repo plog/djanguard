@@ -246,7 +246,12 @@ function saveAction(callback) {
             error: function(error) {
                 console.error('Error saving action:', error);
                 if (error.status === 400) {
-                    alert('Validation failed.' + error.responseText);
+                    console.log(error)
+                    if(error.responseJSON){
+                        alert(error.responseJSON.error);
+                    }else{
+                        alert('Validation failed.' + error.responseText);
+                    }
                 } else {
                     alert('An unexpected error occurred while saving the action.');
                 }
