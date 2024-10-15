@@ -6,6 +6,7 @@ pycryptodome
 Django
 django-admin
 django-celery-beat
+django_cryptography
 django-celery-results
 django-contact-form
 django-cors-headers
