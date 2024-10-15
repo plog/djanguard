@@ -132,20 +132,7 @@
     </div>
 
     <div class="col-5 align-top context-doc doc2" id="test-result">
-        Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet. Laboris ipsum est qui ut commodo culpa ex proident veniam amet sit magna. Quis in consectetur aute nisi eiusmod pariatur ex dolor dolor excepteur cillum duis. Enim duis aliqua dolore qui quis. Ad voluptate ea adipisicing do reprehenderit est sint in est nostrud magna cillum proident incididunt. Aliquip enim excepteur eiusmod exercitation mollit ipsum tempor dolore labore voluptate cillum enim elit ullamco. Aliquip et ut ipsum dolore aliqua consequat sint tempor aute ad.
-        Labore eu qui aliqua et labore ipsum. Ut et nisi cillum quis nostrud. Nulla laborum pariatur ut deserunt. Adipisicing aliquip laborum proident ex eu sint sit est. Labore culpa anim dolor aute non. Pariatur aute est voluptate voluptate nostrud deserunt Lorem.
 
-        Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet. Laboris ipsum est qui ut commodo culpa ex proident veniam amet sit magna. Quis in consectetur aute nisi eiusmod pariatur ex dolor dolor excepteur cillum duis. Enim duis aliqua dolore qui quis. Ad voluptate ea adipisicing do reprehenderit est sint in est nostrud magna cillum proident incididunt. Aliquip enim excepteur eiusmod exercitation mollit ipsum tempor dolore labore voluptate cillum enim elit ullamco. Aliquip et ut ipsum dolore aliqua consequat sint tempor aute ad.
-        Labore eu qui aliqua et labore ipsum. Ut et nisi cillum quis nostrud. Nulla laborum pariatur ut deserunt. Adipisicing aliquip laborum proident ex eu sint sit est. Labore culpa anim dolor aute non. Pariatur aute est voluptate voluptate nostrud deserunt Lorem.
-
-        Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet. Laboris ipsum est qui ut commodo culpa ex proident veniam amet sit magna. Quis in consectetur aute nisi eiusmod pariatur ex dolor dolor excepteur cillum duis. Enim duis aliqua dolore qui quis. Ad voluptate ea adipisicing do reprehenderit est sint in est nostrud magna cillum proident incididunt. Aliquip enim excepteur eiusmod exercitation mollit ipsum tempor dolore labore voluptate cillum enim elit ullamco. Aliquip et ut ipsum dolore aliqua consequat sint tempor aute ad.
-        Labore eu qui aliqua et labore ipsum. Ut et nisi cillum quis nostrud. Nulla laborum pariatur ut deserunt. Adipisicing aliquip laborum proident ex eu sint sit est. Labore culpa anim dolor aute non. Pariatur aute est voluptate voluptate nostrud deserunt Lorem.
-
-        Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet. Laboris ipsum est qui ut commodo culpa ex proident veniam amet sit magna. Quis in consectetur aute nisi eiusmod pariatur ex dolor dolor excepteur cillum duis. Enim duis aliqua dolore qui quis. Ad voluptate ea adipisicing do reprehenderit est sint in est nostrud magna cillum proident incididunt. Aliquip enim excepteur eiusmod exercitation mollit ipsum tempor dolore labore voluptate cillum enim elit ullamco. Aliquip et ut ipsum dolore aliqua consequat sint tempor aute ad.
-        Labore eu qui aliqua et labore ipsum. Ut et nisi cillum quis nostrud. Nulla laborum pariatur ut deserunt. Adipisicing aliquip laborum proident ex eu sint sit est. Labore culpa anim dolor aute non. Pariatur aute est voluptate voluptate nostrud deserunt Lorem.
-
-        Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet. Laboris ipsum est qui ut commodo culpa ex proident veniam amet sit magna. Quis in consectetur aute nisi eiusmod pariatur ex dolor dolor excepteur cillum duis. Enim duis aliqua dolore qui quis. Ad voluptate ea adipisicing do reprehenderit est sint in est nostrud magna cillum proident incididunt. Aliquip enim excepteur eiusmod exercitation mollit ipsum tempor dolore labore voluptate cillum enim elit ullamco. Aliquip et ut ipsum dolore aliqua consequat sint tempor aute ad.
-        Labore eu qui aliqua et labore ipsum. Ut et nisi cillum quis nostrud. Nulla laborum pariatur ut deserunt. Adipisicing aliquip laborum proident ex eu sint sit est. Labore culpa anim dolor aute non. Pariatur aute est voluptate voluptate nostrud deserunt Lorem.
     </div>
 </div>
 
@@ -163,7 +150,28 @@ function help(){
         selenium_script: "Enter the Selenium script if you are using Selenium for testing. This will be executed to verify the behavior.",
         payload: "Enter the payload to be sent with the request. This is generally used for POST, PUT, and PATCH actions."
     };
-    const formFields = document.querySelectorAll('#action-form input, #action-form select, #action-form textarea');
+    const assertionHelpMessages = {
+    "status_code": 'Check if the response status code matches the expected value, e.g., 200 for success. \n\nIf you use Payload, it must be \n{\n"headers": {....},\n"data": {....}\n}',
+    "contains_keyword": 'Verify if the response contains a specific keyword. Useful for checking text presence. \n\nIf you use Payload, it must be \n{\n"headers": {....},\n"data": {....}\n}',
+    "selenium": "Use Selenium to simulate browser actions for deeper testing. Commands can include:\n" +
+        "- check-element-exists \"selector\": Verify if an element exists.\n" +
+        "- fill \"selector\" with \"value\": Fill an input field with a given value.\n" +
+        "- click \"selector\": Click on an element.\n" +
+        "- check-text \"text\" is-present: Check if specific text is present.\n" +
+        "- assert title \"expected_title\": Assert that the browser's title matches the expected value.\n" +
+        "- assert element present \"selector\": Assert that an element is present.\n" +
+        "- assert element not present \"selector\": Assert that an element is not present.\n" +
+        "- pause: Pause the execution.\n" +
+        "- click at \"x\" \"y\": Click at specific coordinates.\n" +
+        "- double click \"selector\": Double-click on an element.\n" +
+        "- drag and drop \"source\" to \"target\": Drag an element from source to target.\n" +
+        "- mouse over \"selector\": Move the mouse over an element.\n" +
+        "- set window size \"width\" \"height\": Set the browser window size.\n\n" +
+        "Note: This is a work in progress, and we are still testing all of these commands.",
+    "json_key_exists": "Check if a specific key exists in the JSON response. Useful for validating API structures."
+};
+    const formFields          = document.querySelectorAll('#action-form input, #action-form select, #action-form textarea');
+    const assertionTypeSelect = document.getElementById('assertion_type');
 
     // Iterate over each field and add event listeners
     formFields.forEach(field => {
@@ -175,8 +183,13 @@ function help(){
 
         // Optional: Clear the help message when the field loses focus
         field.addEventListener('blur', function() {
-            document.getElementById('test-result').innerText = "Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet...";  // Default or placeholder help message
+            document.getElementById('test-result').innerText = "Fill in the details to add or modify an action. Make sure all fields are correctly filled out to ensure proper functionality.";  // Default or placeholder help message
         });
+        assertionTypeSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            const helpMessage = assertionHelpMessages[selectedValue] || "Select an assertion type to get more information.";
+            document.getElementById('test-result').innerText = helpMessage;
+        });        
     });     
 }
 
