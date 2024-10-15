@@ -31,6 +31,7 @@
                                         ${sensor.favico ? '<img src="'+sensor.favico+'" height="15">' : ''}
                                         ${sensor.name}&nbsp;
                                         <a href="/sensor/${sensor.id}/"><i class="bi bi-pencil-square"></i></a>
+                                        <a href="#" class="sensor-delete-btn text-dangermx-2" data-sensor-id="${sensor.id}"><i class="bi bi-trash3-fill"></i></a>
                                         <a href=""><i class="bi bi-play-circle-fill"></a></i>
                                     </h5>
                                 </div>
@@ -46,6 +47,7 @@
                     `);
                     fetchActions(sensor.id);
                 });
+                handleDeleteSensor('.sensor-delete-btn' , 'Delete this sensor? THIS ACTION CANNOT BE UNDONE.');
             },
             error: function(error) {
                 console.error('Error fetching sensors:', error);

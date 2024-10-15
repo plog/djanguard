@@ -4,12 +4,12 @@ from . import views
 
 urlpatterns = [
     # Sensor API
-    path('api/sensor/'         , views.SensorListCreateAPI.as_view(), name='api_sensor_list_create'),
-    path('api/sensor/<int:pk>/', views.SensorDetailAPI.as_view(), name='api_sensor_detail'),
+    path('api/sensor/'             , views.SensorListCreateAPI.as_view(), name='api_sensor_list_create'),
+    path('api/sensor/<int:pk>/'    , views.SensorDetailAPI.as_view(), name='api_sensor_detail'),
 
     # Action API
-    path('api/action/'                   , views.ActionListCreateAPI.as_view(), name='api_action_list_create'),
-    path('api/action/<int:pk>/'          , views.ActionDetailAPI.as_view(), name='api_action_detail'),
+    path('api/action/'                    , views.ActionListCreateAPI.as_view(), name='api_action_list_create'),
+    path('api/action/<int:pk>/'           , views.ActionDetailAPI.as_view(), name='api_action_detail'),
     path('api/action/<int:action_id>/run/', views.ActionRunNowAPI.as_view(), name='run_action_now'),  # New URL for running action
 
     # TestResult API

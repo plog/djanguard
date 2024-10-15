@@ -28,12 +28,21 @@ $(document).ready(function() {
     
     // Create new Sensor
     $('#create-sensor').click(function() {
-        const data = {
-            name: $('#sensor-create-form #name').val(),
-            url: $('#sensor-create-form #url').val(),
-            frequency: $('#sensor-create-form #frequency').val(),
-            user:user
-        };
+        // Client-side validation
+        const name        = $('#name').val();
+        const url         = $('#url').val();
+        const frequency   = $('#frequency').val();
+
+        if(!isUrlValid(url)){
+            alert('Not a valid URL');
+            return;
+        }
+        if (!name  || !frequency || !user) {
+            alert('Please fill in all required fields before saving.');
+            return;
+        }
+
+        const data = {name:name,url:url,frequency:frequency,user: user};
         $.ajax({
             url: '/api/sensor/',
             method: 'POST',
@@ -41,7 +50,6 @@ $(document).ready(function() {
             headers: {'X-CSRFToken': Cookies.get('csrftoken')},
             data: JSON.stringify(data),
             success: function(response) {
-                alert('Sensor created successfully!');
                 window.location.href = '/board/';
             },
             error: function(error) {

@@ -5,3 +5,7 @@ footer > div > a{
 footer > div > a:visited{
     color:black;
 }
+a.title{
+    text-decoration: none;
+    color: black;
+}

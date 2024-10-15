@@ -45,8 +45,7 @@
         </form>
     </div>
     <div class="col-5 align-top context-doc doc1">
-        Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet. Laboris ipsum est qui ut commodo culpa ex proident veniam amet sit magna. Quis in consectetur aute nisi eiusmod pariatur ex dolor dolor excepteur cillum duis. Enim duis aliqua dolore qui quis. Ad voluptate ea adipisicing do reprehenderit est sint in est nostrud magna cillum proident incididunt. Aliquip enim excepteur eiusmod exercitation mollit ipsum tempor dolore labore voluptate cillum enim elit ullamco. Aliquip et ut ipsum dolore aliqua consequat sint tempor aute ad.
-        Labore eu qui aliqua et labore ipsum. Ut et nisi cillum quis nostrud. Nulla laborum pariatur ut deserunt. Adipisicing aliquip laborum proident ex eu sint sit est. Labore culpa anim dolor aute non. Pariatur aute est voluptate voluptate nostrud deserunt Lorem.
+        The name must only contain numbers and letters. The URL should be valid, ideally using the top-level domain (you can add specific paths in the actions). Frequency is in seconds and must be at least 10 for free accounts.
     </div>    
 </div>    
 
@@ -121,7 +120,7 @@
                         <button type="button" id="save-action" class="btn btn-sm btn-primary">Save</button>
                     </div>
                     <div class="col-2 pt-1">
-                        <button type="button" id="test-action" class="btn btn-sm btn-primary">Test</button>
+                        <button type="button" id="test-action" class="btn btn-sm btn-primary" style="display: none;">Test</button>
                     </div>                    
                     <div class="col-1 pt-0">
                         <i class="bi bi-check-circle" style="color:green; display: none;font-size: x-large;" id="updated-action" ></i>
@@ -151,85 +150,46 @@
 </div>
 
 <script>
-const user = {{request.user.id}};
-$(document).ready(function() {
-    const sensorId = parseInt('{{ sensor.id }}');
-    // Update Sensor properties
-    $('#update-sensor').click(function() {
-        const data = {
-            name: $('#sensor-edit-form #name').val(),
-            url: $('#sensor-edit-form #url').val(),
-            frequency: $('#sensor-edit-form #frequency').val(),
-            user:user
-        };
-        $.ajax({
-            url: `/api/sensor/${sensorId}/`,
-            method: 'PUT',
-            contentType: 'application/json',
-            headers: {'X-CSRFToken': Cookies.get('csrftoken')},
-            data: JSON.stringify(data),
-            success: function(response) {
-                console.log('Sensor updated successfully!');
-                $('#updated-sensor').show().delay(2000).fadeOut();
-            },
-            error: function(error) {
-                console.error('Error updating sensor:', error);
-                alert('Failed to update sensor.');
-            }
+const user     = parseInt({{request.user.id}});
+const sensorId = parseInt('{{ sensor.id }}');
+
+function help(){
+    const helpMessages = {
+        action_name: "Enter a name for the action. This will help identify what this action is for.",
+        action_path: "Enter the path for the action. This should be the endpoint you want to target. Start with '/' if sensor's URL does not end with '/'",
+        action_type: "Select the HTTP method for the action. This determines how the action interacts with the API (e.g., GET, POST, DELETE).",
+        assertion_type: "Select the type of assertion you want to make. This will verify if the response meets your expectations.",
+        expected_value: "Enter the expected value for the assertion. This can be a status code, a keyword, or a specific JSON key depending on the assertion type.",
+        selenium_script: "Enter the Selenium script if you are using Selenium for testing. This will be executed to verify the behavior.",
+        payload: "Enter the payload to be sent with the request. This is generally used for POST, PUT, and PATCH actions."
+    };
+    const formFields = document.querySelectorAll('#action-form input, #action-form select, #action-form textarea');
+
+    // Iterate over each field and add event listeners
+    formFields.forEach(field => {
+        field.addEventListener('focus', function() {
+            // Update the help message in the #test-result div
+            const message = helpMessages[this.id] || "No help available for this field.";
+            document.getElementById('test-result').innerText = message;
         });
-    });
 
-    // Load Actions LIST 
-    function loadActions() {
-        $.ajax({
-            url: `/api/action/?sensor=${sensorId}`,
-            method: 'GET',
-            success: function(data) {
-                let tableContent = '';
-                data.forEach(function(action) {
-                    tableContent += `<tr>
-                        <td>${action.action_name}</td>
-                        <td>${action.action_type}</td>
-                        <td>${action.action_path}</td>
-                        <td nowrap width="1">
-                            <a class="edit-action text-black mx-1" data-id="${action.id}"><i class="bi bi-pencil-square"></i></a>
-                            <a class="delete-action text-danger mx-1" data-id="${action.id}"><i class="bi bi-trash3-fill"></i></a>
-                        </td>
-                    </tr>`;
-                });
-                $('#action-table tbody').html(tableContent);
-            },
-            error: function(error) {
-                console.error('Error fetching actions:', error);
-            }
+        // Optional: Clear the help message when the field loses focus
+        field.addEventListener('blur', function() {
+            document.getElementById('test-result').innerText = "Laboris voluptate sint labore ex ipsum ea aliquip qui laboris reprehenderit officia anim amet...";  // Default or placeholder help message
         });
-    }
-    loadActions();
+    });     
+}
 
-    function clearActionForm(){
-        $('#addEditActionTitle').html('New Action')
-        $('#action-id').val(null);
-        $('#action-form')[0].reset();
-        $('#selenium-section').hide();
-        $('#action-form-title').text('New Action');        
-    }
-
-    // Handle add new action button click
-    $('#add-new-action').click(function() {
-        clearActionForm()
-    });    
-
-
-    function saveAction(callback) {
+function saveAction(callback) {
         const actionId = $('#action-id').val();
         let method     = null;
         let url        = null;
 
         if(actionId){
-            url = `/api/action/${actionId}/`;
+            url    = `/api/action/${actionId}/`;
             method = 'PUT';
         }else{
-            url = `/api/action/`;
+            url    = `/api/action/`;
             method = 'POST';
         }
         // Client-side validation
@@ -239,7 +199,7 @@ $(document).ready(function() {
         const assertionType   = $('#assertion_type').val();
         const payload         = $('#payload').val();
         const selenium_script = $('#selenium_script').val().replace(/\\"/g, '"');
-        let expectedValue   = $('#expected_value').val();
+        let expectedValue     = $('#expected_value').val();
 
         if (!actionName || !actionType || !actionPath || !assertionType || !expectedValue) {
             alert('Please fill in all required fields before saving.');
@@ -268,6 +228,7 @@ $(document).ready(function() {
                 loadActions();
                 if (callback) callback(response.id);
                 $('#updated-action').show().delay(2000).fadeOut();;
+                $('#test-action').show();
             },
             error: function(error) {
                 console.error('Error saving action:', error);
@@ -279,6 +240,76 @@ $(document).ready(function() {
             }
         });  
     }
+
+// Load Actions LIST 
+function loadActions() {
+    $.ajax({
+        url: `/api/action/?sensor=${sensorId}`,
+        method: 'GET',
+        success: function(data) {
+            let tableContent = '';
+            data.forEach(function(action) {
+                tableContent += `<tr>
+                    <td>${action.action_name}</td>
+                    <td>${action.action_type}</td>
+                    <td>${action.action_path}</td>
+                    <td nowrap width="1">
+                        <a class="edit-action text-black mx-1" data-id="${action.id}"><i class="bi bi-pencil-square"></i></a>
+                        <a class="delete-action text-danger mx-1" data-id="${action.id}"><i class="bi bi-trash3-fill"></i></a>
+                    </td>
+                </tr>`;
+            });
+            $('#action-table tbody').html(tableContent);
+        },
+        error: function(error) {
+            console.error('Error fetching actions:', error);
+        }
+    });
+}
+
+function clearActionForm(){
+        $('#addEditActionTitle').html('New Action')
+        $('#action-id').val(null);
+        $('#action-form')[0].reset();
+        $('#selenium-section').hide();
+        $('#action-form-title').text('New Action');    
+        $('#test-action').hide();    
+        help();
+    }
+
+$(document).ready(function() {
+    // Update Sensor properties
+    $('#update-sensor').click(function() {
+        const data = {
+            name: $('#sensor-edit-form #name').val(),
+            url: $('#sensor-edit-form #url').val(),
+            frequency: $('#sensor-edit-form #frequency').val(),
+            user:user
+        };
+        $.ajax({
+            url: `/api/sensor/${sensorId}/`,
+            method: 'PUT',
+            contentType: 'application/json',
+            headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+            data: JSON.stringify(data),
+            success: function(response) {
+                console.log('Sensor updated successfully!');
+                $('#updated-sensor').show().delay(2000).fadeOut();
+            },
+            error: function(error) {
+                console.error('Error updating sensor:', error);
+                alert('Failed to update sensor.');
+            }
+        });
+    });
+
+    loadActions();
+    help();
+
+    // Handle add new action button click
+    $('#add-new-action').click(function() {
+        clearActionForm()
+    });    
 
     // Add or Edit Action
     $('#save-action').click(function() {
@@ -329,6 +360,7 @@ $(document).ready(function() {
 
     // Handle edit action button click
     $(document).on('click', '.edit-action', function() {
+        $('#test-action').show();
         $('#addEditActionTitle').html(`Edit `);
         $('#test-result').html('');
 

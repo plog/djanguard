@@ -14,6 +14,29 @@ const majorTimezones = [
     'America/Sao_Paulo'
 ];
 
+function handleDeleteSensor(selector, confirmationMessage) {
+    document.querySelectorAll(selector).forEach(button => {
+        button.addEventListener('click', function() {
+            const id    = this.getAttribute('data-sensor-id');
+            if (confirm(confirmationMessage)) {
+                $.ajax({
+                    url: `/api/sensor/${id}/`,
+                    method: 'delete',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},         
+                    success: function () {
+                        window.location.reload();
+                    },
+                    error: function (error) {
+                        console.error(`Failed to ${method} the item.`, error);
+                        alert(`Cannot ${method} item`);
+                    }                               
+                })
+            }
+        });
+    });
+}
+
+
 function handleAction(selector, method, confirmationMessage) {
     document.querySelectorAll(selector).forEach(button => {
         button.addEventListener('click', function() {
@@ -154,6 +177,15 @@ function onlyNumberKey(evt) {
     return true;
 }
 
+function isUrlValid(string) {
+    try {
+      new URL(string);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+  
 function onlyAlphaNumericKey(evt) {
     // Get the ASCII code of the key pressed
     let ASCIICode = (evt.which) ? evt.which : evt.keyCode;
@@ -176,13 +208,13 @@ function onlyAlphaNumericKey(evt) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    setupTimezoneSelector();
-    const searchSensors = document.getElementById('search-sensor-input');
-    if(searchSensors){
-        setupSearchInput(searchSensors,'sensor')
-        spin('block');
-        fetchBackend(searchSensors,'sensor');
-    }    
+    // setupTimezoneSelector();
+    // const searchSensors = document.getElementById('search-sensor-input');
+    // if(searchSensors){
+    //     setupSearchInput(searchSensors,'sensor')
+    //     spin('block');
+    //     fetchBackend(searchSensors,'sensor');
+    // }
 
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {

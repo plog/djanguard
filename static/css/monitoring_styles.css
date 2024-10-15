@@ -1,3 +1,7 @@
+a.title{
+    text-decoration: none;
+    color: black;
+}
 footer > div > a{
     color:black;
     text-decoration: none;
