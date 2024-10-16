@@ -38,7 +38,7 @@ class PrivacyView(TemplateView):
 class TermsView(TemplateView):
     template_name = 'terms.html'
     
-class TermsView(TemplateView):
+class CommandsView(TemplateView):
     template_name = 'commands.html'
     
 @method_decorator(csrf_exempt, name='dispatch')
