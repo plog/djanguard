@@ -19,6 +19,7 @@ ASSERTION_TYPES = [
     ('status_code'     , 'Status Code'),
     ('contains_keyword', 'Contains Keyword'),
     ('selenium'        , 'Selenium Style'),
+    ('screenshot'      , 'Take a screenshot'),
     ('json_key_exists' , 'JSON Key Exists'),
 ]
 

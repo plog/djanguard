@@ -19,7 +19,7 @@
 
     function fetchSensors() {
         $.ajax({
-            url: '/api/sensor/', // Using the correct API endpoint
+            url: '/api/sensor/', 
             type: 'GET',
             success: function(sensors) {
                 sensors.forEach(sensor => {
@@ -61,10 +61,15 @@
             type: 'GET',
             success: function(actions) {
                 actions.forEach(action => {
+                    let img = ''
+                    if(action.assertion_type == 'screenshot'){
+                        img = '<img class="img-fluid" src="/api/action/' + action.id + '/screenshot/">';
+                    }
                     $(`#actions-${sensorId}`).append(`
                         <div class="action-graph">
                             <h3 class="board">${action.action_name} (${action.action_type})</h3>
                             <div id="chart-action-${action.id}" class="chart-container" style="height: 30px; width: 90%;"></div>
+                        ${img}
                         </div>
                     `);
                     fetchTestResults(action.id);

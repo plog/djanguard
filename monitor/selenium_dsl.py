@@ -3,11 +3,16 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils import timezone
 from playwright.async_api import async_playwright
+from asgiref.sync import sync_to_async
+from PIL import Image
+
 import asyncio
 import base64
 import hashlib
 import logging
 import re
+import traceback
+import os
 logger = logging.getLogger('celery_process')
 
 class CommandHandler:
@@ -137,6 +142,48 @@ class DSLExecutor:
             (r'set window size "(.+?)" "(.+?)"', 'set_window_size'),
         ]
 
+    async def screenshot(self):
+        logger.info(f'Trying to take a Screenshot.....')
+        DATA_DIR = settings.DATA_DIR
+        testResult = TestResult(
+            action         = self.action,
+            test_type      = self.action.assertion_type,
+            expected_value = 'fail',
+            timestamp      = timezone.now(),
+        )
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            try:
+                browser     = await p.chromium.launch()
+                page        = await browser.new_page()
+                await page.set_viewport_size({"width": 1000, "height": 1000})
+                sensor_url  = self.action.sensor.url
+                action_path = self.action.action_path      
+                          
+                await page.goto(sensor_url + action_path)
+                user_id         = await sync_to_async(lambda: self.action.sensor.user.id)()
+                filename        = f"{self.action.id}_{user_id}_{timezone.now().strftime('%Y%m%d%H%M%S')}.jpg"
+                screenshot_path = os.path.join(DATA_DIR, filename)
+                                
+                await page.screenshot(path=screenshot_path)
+                # Resize the image using Pillow
+                img = Image.open(screenshot_path)
+                img = img.resize((500, 500), Image.LANCZOS)  # Resize to 250x250
+                img.save(screenshot_path, quality=50)  # Save with lower quality                
+                await browser.close()
+                testResult.expected_value = 'pass'
+                testResult.body           = filename
+                logger.info(f'Screenshot saved at: {screenshot_path}')
+            except Exception as exc:
+                logger.error(f'Screenshot failed: {exc}')
+                logger.error(traceback.format_exc())
+                testResult.expected_value = 'fail'
+                testResult.body           = exc
+            finally:
+                await browser.close()
+                
+        return testResult
+                
     async def execute(self):
         # Store the result in TestResult model
         testResult = TestResult(
@@ -214,15 +261,3 @@ class DSLExecutor:
             await browser.close()
             return testResult
 
-# Sample DSL commands
-# -------------------
-# open "https://example.com"
-# check-element-exists "#login-button"
-# fill "#username" with "testuser"
-# fill "#password" with "password123"
-# click "#login-button"
-# check-text "Welcome" is-present
-# if element present "#logout-button"
-#     click "#logout-button"
-# end
-# repeat if element not present "#login-button" 3 time

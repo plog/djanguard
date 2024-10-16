@@ -5,20 +5,25 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-from django.utils.decorators import method_decorator
-from django.utils import timezone
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView
-from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.generic import TemplateView
+from PIL import Image
 
 from .tasks import run_playwright_action
 from .models import Action, Sensor, TestResult, UserProfile
 from .serializers import ActionSerializer, SensorSerializer, TestResultSerializer
 
 import logging
+import os
+import re
+import fnmatch
 
 logger = logging.getLogger('django')
 MIN_FREQUENCY = 30
@@ -278,3 +283,36 @@ class ActionRunNowAPI(APIView):
         except Exception as exc:
             logger.error(f"ActionRunNowAPI Exception {exc}")
             return Response({'error': 'An unexpected error occurred', 'details': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class ActionScreenshotAPIView(APIView):
+    # Handles retrieving the latest screenshot of a specific action for authenticated users
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, action_id):
+        action = get_object_or_404(Action, pk=action_id)
+
+        # Check if the current user is allowed to access this action
+        if action.sensor.user != request.user:
+            logger.error("You do not have permission to access this action's screenshots.")
+            raise PermissionDenied("You do not have permission to access this action's screenshots.")
+
+        # Construct the path to the screenshot
+        screenshot_dir              = os.path.join(settings.DATA_DIR)
+        screenshot_filename_pattern = f"{action.id}_{action.sensor.user.id}_*.jpg"
+        
+        # Find the latest screenshot matching the pattern
+        try:
+            matching_files = sorted([f for f in os.listdir(screenshot_dir) if fnmatch.fnmatch(f, screenshot_filename_pattern)], key=lambda x: os.path.getmtime(os.path.join(screenshot_dir, x)), reverse=True)
+            if not matching_files:
+                logger.error(f"No screenshot found in {screenshot_dir} for this pattern {screenshot_filename_pattern}.")
+                return Response({"error": "No screenshot found for this action."}, status=status.HTTP_404_NOT_FOUND)
+
+            latest_screenshot = max(matching_files, key=lambda x: os.path.getmtime(os.path.join(screenshot_dir, x)))
+            screenshot_path   = os.path.join(screenshot_dir, latest_screenshot)
+            
+            # Return the screenshot as a binary response
+            return FileResponse(open(screenshot_path, 'rb'), content_type='image/png')
+        
+        except Exception as e:
+            logger.error(f"Error retrieving screenshot for action {action_id}: {str(e)}")
+            return Response({"error": "An error occurred while retrieving the screenshot."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

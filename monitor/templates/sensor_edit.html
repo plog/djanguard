@@ -75,6 +75,7 @@
                     <label for="action_name" class="form-label">Action Name:</label><span class="require">*</span>
                     <input type="text" id="action_name" name="action_name" class="form-control form-control-sm" required>
                 </div>
+
                 <div class="mb-2">
                     <label for="action_path" class="form-label">Action Path:</label><span class="require">*</span>
                     <input type="text" id="action_path" name="action_path" class="form-control form-control-sm" required>
@@ -93,23 +94,28 @@
                         <option value="TRACE"  >TRACE</option>
                     </select>
                 </div>
+
                 <div class="mb-2">
                     <label for="assertion_type" class="form-label">Assertion Type:</label><span class="require">*</span>
                     <select id="assertion_type" name="assertion_type" class="form-select form-select-sm" required>
                         <option value="status_code"     >Status Code</option>
                         <option value="contains_keyword">Contains Keyword</option>
                         <option value="selenium"        >Selenium Style</option>
+                        <option value="screenshot"      >Screenshot</option>
                         <option value="json_key_exists" >JSON Key Exists</option>
                     </select>
                 </div>
+
                 <div class="mb-2">
                     <label for="expected_value" class="form-label">Expected Value:</label><span class="require">*</span>
                     <input type="text" id="expected_value" name="expected_value" class="form-control form-control-sm" required>
                 </div>
+
                 <div id="selenium-section" class="mb-2" style="display: none;">
                     <label for="selenium_script" class="form-label">Selenium style:</label>
                     <textarea id="selenium_script" name="selenium_script" class="form-control form-control-sm" rows="5"></textarea>
-                </div>                
+                </div>   
+
                 <div id="payload-section" class="mb-2">
                     <label for="payload" class="form-label">Payload:</label>
                     <textarea id="payload" name="payload" class="form-control form-control-sm" rows="5"></textarea>
@@ -142,34 +148,21 @@ const sensorId = parseInt('{{ sensor.id }}');
 
 function help(){
     const helpMessages = {
-        action_name: "Enter a name for the action. This will help identify what this action is for.",
-        action_path: "Enter the path for the action. This should be the endpoint you want to target. Start with '/' if sensor's URL does not end with '/'",
-        action_type: "Select the HTTP method for the action. This determines how the action interacts with the API (e.g., GET, POST, DELETE).",
-        assertion_type: "Select the type of assertion you want to make. This will verify if the response meets your expectations.",
-        expected_value: "Enter the expected value for the assertion. This can be a status code, a keyword, or a specific JSON key depending on the assertion type.",
-        selenium_script: "Enter the Selenium script if you are using Selenium for testing. This will be executed to verify the behavior.",
-        payload: "Enter the payload to be sent with the request. This is generally used for POST, PUT, and PATCH actions."
+        action_name     : "Enter a name for the action. This will help identify what this action is for.",
+        action_path     : "Enter the path for the action. This should be the endpoint you want to target. Start with '/' if sensor's URL does not end with '/'",
+        action_type     : "Select the HTTP method for the action. This determines how the action interacts with the API (e.g., GET, POST, DELETE).",
+        assertion_type  : "Select the type of assertion you want to make. This will verify if the response meets your expectations.",
+        expected_value  : "Enter the expected value for the assertion. This can be a status code, a keyword, or a specific JSON key depending on the assertion type.",
+        selenium_script : "Enter the Selenium script if you are using Selenium for testing. This will be executed to verify the behavior.",
+        payload         : "Enter the payload to be sent with the request. This is generally used for POST, PUT, and PATCH actions."
     };
     const assertionHelpMessages = {
-    "status_code": 'Check if the response status code matches the expected value, e.g., 200 for success. \n\nIf you use Payload, it must be \n{\n"headers": {....},\n"data": {....}\n}',
-    "contains_keyword": 'Verify if the response contains a specific keyword. Useful for checking text presence. \n\nIf you use Payload, it must be \n{\n"headers": {....},\n"data": {....}\n}',
-    "selenium": "Use Selenium to simulate browser actions for deeper testing. Commands can include:\n" +
-        "- check-element-exists \"selector\": Verify if an element exists.\n" +
-        "- fill \"selector\" with \"value\": Fill an input field with a given value.\n" +
-        "- click \"selector\": Click on an element.\n" +
-        "- check-text \"text\" is-present: Check if specific text is present.\n" +
-        "- assert title \"expected_title\": Assert that the browser's title matches the expected value.\n" +
-        "- assert element present \"selector\": Assert that an element is present.\n" +
-        "- assert element not present \"selector\": Assert that an element is not present.\n" +
-        "- pause: Pause the execution.\n" +
-        "- click at \"x\" \"y\": Click at specific coordinates.\n" +
-        "- double click \"selector\": Double-click on an element.\n" +
-        "- drag and drop \"source\" to \"target\": Drag an element from source to target.\n" +
-        "- mouse over \"selector\": Move the mouse over an element.\n" +
-        "- set window size \"width\" \"height\": Set the browser window size.\n\n" +
-        "Note: This is a work in progress, and we are still testing all of these commands.",
-    "json_key_exists": "Check if a specific key exists in the JSON response. Useful for validating API structures."
-};
+        "status_code"      : 'Check if the response status code matches the expected value, e.g., 200 for success. \n\nIf you use Payload, it must be \n{\n"headers": {....},\n"data": {....}\n}',
+        "contains_keyword" : 'Verify if the response contains a specific keyword. Useful for checking text presence. \n\nIf you use Payload, it must be \n{\n"headers": {....},\n"data": {....}\n}',
+        "selenium"         : "Use Selenium to simulate browser actions for deeper testing. Commands can include: Check <a href='/commands'>Commands</a>",
+        "screenshot"       : "Screenshot",
+        "json_key_exists"  : "Check if a specific key exists in the JSON response. Useful for validating API structures."
+    };
     const formFields          = document.querySelectorAll('#action-form input, #action-form select, #action-form textarea');
     const assertionTypeSelect = document.getElementById('assertion_type');
 

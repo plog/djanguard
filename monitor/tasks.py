@@ -1,19 +1,22 @@
 from .models import Action, TestResult, Sensor
-from .serializers import TestResultSerializer
 from .selenium_dsl import DSLExecutor
+from .serializers import TestResultSerializer
 from asgiref.sync import sync_to_async
+from bs4 import BeautifulSoup
 from celery import shared_task
 from celery.schedules import timedelta
 from django_celery_results.models import TaskResult
+from django.conf import settings
 from django.utils import timezone
-from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
-import asyncio
-import logging
+
 import aiohttp
+import asyncio
 import json
-import traceback
+import logging
+import os
 import re
+import traceback
 
 logger = logging.getLogger('celery_process')
 
@@ -100,14 +103,13 @@ async def async_run_playwright_action(action_id):
         sensor.favico = favico
         await sync_to_async(sensor.save)() 
 
-
     # If the action is a simple status code check, use aiohttp for efficiency
     if action.assertion_type in ['status_code','contains_keyword']:
         test_result = TestResult(
             action         = action,
             test_type      = action.assertion_type,
             expected_value = action.expected_value,
-            timestamp=timezone.now(),
+            timestamp      = timezone.now(),
         )        
         try:
             async with aiohttp.ClientSession() as session:
@@ -141,10 +143,22 @@ async def async_run_playwright_action(action_id):
         executor    = DSLExecutor(action)
         test_result = await executor.execute()
 
+    # Playwright screenshot action
+    elif action.assertion_type == 'screenshot':
+        logger.info(f'Trying to take a Screenshot.....')
+        executor    = DSLExecutor(action)
+        test_result = await executor.screenshot()
+            
     if test_result:
         await sync_to_async(test_result.save)()
     else:
-        return {"message": f"Not test result created from Action {action.action_name}"}
+        test_result = TestResult(
+            action         = action,
+            test_type      = action.assertion_type,
+            expected_value = 'fail',
+            timestamp      = timezone.now(),
+            body           = f"Dunno what to do... :/"
+        )          
 
     # Serialize the TestResult to return a dictionary representation
     if test_result:

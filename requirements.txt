@@ -18,6 +18,7 @@ geoip2
 gunicorn
 openpyxl
 pandas
+pillow
 psutil
 psycopg2-binary
 pyarrow
