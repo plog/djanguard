@@ -1,0 +1,484 @@
+{% extends "website_base.html" %}
+{% load static %}
+{% load i18n %}
+{% block content %}
+
+<div class="row">
+    <div class="col-md-10">
+        <h1>Selenium Style Commands</h1>
+        <p>DSLExecutor User Guide</p>
+        <h2 id="introduction-to-dom-selection">Introduction to DOM
+        Selection</h2>
+        <p>To effectively interact with web elements using the DSL commands, you
+        need to understand how to locate elements on a webpage. This process is
+        called “DOM selection,” and it is based on using selectors that uniquely
+        identify HTML elements in the Document Object Model (DOM). Below, we
+        explain common types of selectors that are used throughout the
+        examples.</p>
+        <h3 id="types-of-selectors">Types of Selectors</h3>
+        <p>Selectors are the key to targeting elements on a webpage for actions
+        like clicking, filling out forms, or verifying text. Here are some of
+        the main types of selectors:</p>
+        <ol class="incremental" type="1">
+        <li><strong>ID Selector (<code>#id</code>)</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>: <code>#id_username</code></li>
+        <li><strong>Usage</strong>: Selects an element with a specific ID. IDs
+        are unique within the page, making them ideal for precise
+        selection.</li>
+        <li><strong>Example Command</strong>:
+        <code>fill "#id_username" with "my_username"</code></li>
+        <li><strong>Explanation</strong>: This command fills an input field with
+        the ID <code>id_username</code> with the value
+        <code>my_username</code>.</li>
+        </ul></li>
+        <li><strong>Class Selector (<code>.class</code>)</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>: <code>.btn-primary</code></li>
+        <li><strong>Usage</strong>: Selects elements by their class attribute.
+        Classes are used to style elements and are often shared across multiple
+        elements.</li>
+        <li><strong>Example Command</strong>:
+        <code>click ".btn-primary"</code></li>
+        <li><strong>Explanation</strong>: This command clicks on an element with
+        the class <code>btn-primary</code>.</li>
+        </ul></li>
+        <li><strong>Attribute Selector (<code>[attribute=value]</code>)</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>: <code>[type="checkbox"]</code></li>
+        <li><strong>Usage</strong>: Selects elements based on an attribute and
+        its value. Attribute selectors are useful for targeting elements like
+        input fields or buttons based on their properties.</li>
+        <li><strong>Example Command</strong>:
+        <code>click "input[type=\"checkbox\"]"</code></li>
+        <li><strong>Explanation</strong>: This command clicks on an input
+        element of type <code>checkbox</code>.</li>
+        </ul></li>
+        <li><strong>Tag and Attribute Combination</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>: <code>a[href="/search/"]</code></li>
+        <li><strong>Usage</strong>: Targets an anchor (<code>a</code>) tag with
+        a specific <code>href</code> attribute. This is helpful for selecting
+        links.</li>
+        <li><strong>Example Command</strong>:
+        <code>click "a.nav-link[href=\"/search/\"]"</code></li>
+        <li><strong>Explanation</strong>: This command clicks on a link that
+        navigates to the <code>/search/</code> page.</li>
+        </ul></li>
+        <li><strong>Class and Position Selector
+        (<code>:nth-of-type()</code>)</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>:
+        <code>.list-item:nth-of-type(2)</code></li>
+        <li><strong>Usage</strong>: Selects an element based on its position
+        among siblings with the same tag. This is helpful for targeting specific
+        elements in a list.</li>
+        <li><strong>Example Command</strong>:
+        <code>click ".list-item:nth-of-type(2)"</code></li>
+        <li><strong>Explanation</strong>: This command clicks on the second
+        element with the class <code>list-item</code>.</li>
+        </ul></li>
+        <li><strong>Child Selector (<code>&gt;</code>)</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>:
+        <code>div.container &gt; button.btn-submit</code></li>
+        <li><strong>Usage</strong>: Selects a direct child of an element. This
+        is helpful for narrowing down elements that are directly within a
+        parent.</li>
+        <li><strong>Example Command</strong>:
+        <code>click "div.container &gt; button.btn-submit"</code></li>
+        <li><strong>Explanation</strong>: This command clicks on a button with
+        the class <code>btn-submit</code> that is a direct child of a
+        <code>div</code> with the class <code>container</code>.</li>
+        </ul></li>
+        <li><strong>General Sibling Selector (<code>+</code>)</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>:
+        <code>label + input[type="text"]</code></li>
+        <li><strong>Usage</strong>: Selects an element that is immediately
+        preceded by a specified sibling. This is useful for selecting related
+        form elements.</li>
+        <li><strong>Example Command</strong>:
+        <code>click "label + input[type=\"text\"]"</code></li>
+        <li><strong>Explanation</strong>: This command clicks on an input field
+        that is immediately after a label.</li>
+        </ul></li>
+        <li><strong>Attribute Starts-With Selector (<code>^=</code>)</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>:
+        <code>a[href^="https://example.com"]</code></li>
+        <li><strong>Usage</strong>: Selects elements whose attribute value
+        starts with a given string. This is helpful for targeting links with
+        specific URLs.</li>
+        <li><strong>Example Command</strong>:
+        <code>click "a[href^=\"https://example.com\"]"</code></li>
+        <li><strong>Explanation</strong>: This command clicks on a link where
+        the <code>href</code> attribute starts with
+        <code>https://example.com</code>.</li>
+        </ul></li>
+        <li><strong>Attribute Ends-With Selector (<code>$=</code>)</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>: <code>img[src$=".png"]</code></li>
+        <li><strong>Usage</strong>: Selects elements whose attribute value ends
+        with a given string. This is useful for targeting images or other
+        resources with specific file types.</li>
+        <li><strong>Example Command</strong>:
+        <code>click "img[src$=\".png\"]"</code></li>
+        <li><strong>Explanation</strong>: This command clicks on an image where
+        the <code>src</code> attribute ends with <code>.png</code>.</li>
+        </ul></li>
+        <li><strong>Attribute Contains Selector (<code>*=</code>)</strong>
+        <ul class="incremental">
+        <li><strong>Example</strong>:
+        <code>button[class*='-primary']</code></li>
+        <li><strong>Usage</strong>: Selects elements whose attribute value
+        contains a given substring. This is useful for selecting elements with
+        partially matching attributes.</li>
+        <li><strong>Example Command</strong>:
+        <code>click "button[class*='-primary']"</code></li>
+        <li><strong>Explanation</strong>: This command clicks on a button whose
+        class contains <code>-primary</code>.</li>
+        </ul></li>
+        </ol>
+        <h3 id="how-to-find-the-right-selector">How to Find the Right
+        Selector</h3>
+        <p>To effectively automate interactions with a webpage, it is crucial to
+        use the correct selector to uniquely identify elements. Here are some
+        tips:</p>
+        <ul class="incremental">
+        <li><strong>Inspect the Webpage</strong>: Use your browser’s Developer
+        Tools (usually accessible via right-click -&gt; “Inspect”) to explore
+        the HTML structure of the webpage.</li>
+        <li><strong>ID as the First Choice</strong>: If an element has an
+        <code>id</code>, use it, as IDs are unique within the page, ensuring
+        precise targeting.</li>
+        <li><strong>Use Classes for Shared Elements</strong>: If multiple
+        elements share the same style or behavior, classes are helpful. Be aware
+        that classes may be used on multiple elements.</li>
+        <li><strong>Attribute Selectors for Specific Attributes</strong>: When
+        elements do not have unique IDs or classes, use attribute selectors to
+        target them by attributes like <code>type</code>, <code>name</code>, or
+        <code>placeholder</code>.</li>
+        <li><strong>Combination Selectors for Precision</strong>: Use a
+        combination of tag names, classes, and attributes to create precise
+        selectors when needed.</li>
+        </ul>
+        <h3 id="standards-for-selectors">Standards for Selectors</h3>
+        <p>Selectors are based on the CSS (Cascading Style Sheets) selector
+        syntax, which is a web standard defined by the World Wide Web Consortium
+        (W3C). CSS selectors are not only used for styling purposes but also for
+        selecting elements in JavaScript and automation frameworks like
+        Playwright. The syntax and behavior of these selectors follow the rules
+        set by the CSS Selectors Level 3 specification.</p>
+        <h2 id="commands-overview">Commands Overview</h2>
+        <p>The DSL commands allow you to perform actions like filling forms,
+        clicking buttons, and verifying content on a webpage. Below are examples
+        of how to use each command.</p>
+        <h3 id="fill-an-input-field">1. Fill an Input Field</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>fill &quot;#id_username&quot; with &quot;my_username&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command fills the input field with
+        the selector <code>#id_username</code> with the value
+        <code>my_username</code>.</p>
+        <h3 id="click-a-button-or-link">2. Click a Button or Link</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;.btn-primary&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on an element with
+        the class <code>.btn-primary</code>. This is commonly used for buttons
+        or links.</p>
+        <h3 id="check-text-presence">3. Check Text Presence</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>check-text &quot;Welcome to the dashboard&quot; is-present</code></pre>
+        <p><strong>Explanation:</strong> This command checks if the text
+        “Welcome to the dashboard” is present on the current page. If the text
+        is not found, an error will be logged.</p>
+        <h3 id="assert-element-visibility">4. Assert Element Visibility</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>assert element present &quot;#logout-button&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command verifies that the element
+        with the selector <code>#logout-button</code> is present on the
+        page.</p>
+        <h3 id="retrieve-element-content">5. Retrieve Element Content</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>get element content &quot;table.table.table-striped&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command gets the inner content of
+        the table with the class <code>table.table-striped</code>. This is
+        useful for capturing results or output from the webpage.</p>
+        <h3 id="click-on-a-navigation-link">6. Click on a Navigation Link</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;a.nav-link[href=\&quot;/search/\&quot;]&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on a link that
+        navigates to the search page. The selector targets an anchor tag with
+        the class <code>nav-link</code> and an <code>href</code> attribute of
+        <code>/search/</code>.</p>
+        <h3 id="fill-in-a-text-area">7. Fill in a Text Area</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>fill &quot;textarea.form-control.mb-3[name=\&quot;query\&quot;]&quot; with &quot;John Doe&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command fills a text area with the
+        name <code>query</code> with the value “John Doe”. Text areas are often
+        used for larger inputs like comments or queries.</p>
+        <h3 id="submit-a-form">8. Submit a Form</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;button.btn.btn-primary.my-2.my-sm-0[type=\&quot;submit\&quot;]&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks a button that
+        submits a form. The selector targets a button with multiple classes and
+        a type of <code>submit</code>.</p>
+        <h3 id="verify-search-results">9. Verify Search Results</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>check-text &quot;Result&quot; is-present</code></pre>
+        <p><strong>Explanation:</strong> This command verifies that the text
+        “Result” is present on the page, indicating that the search results are
+        displayed.</p>
+        <h3 id="capture-table-content">10. Capture Table Content</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>get element content &quot;table.table.table-striped&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command captures the content of a
+        table with the class <code>table.table-striped</code>. This is useful
+        for logging data from the webpage, such as search results or
+        reports.</p>
+        <h3 id="click-using-an-id-selector">11. Click Using an ID Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;#submit-button&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on an element with
+        the ID <code>#submit-button</code>. IDs are unique within the page,
+        making this a precise way to target an element.</p>
+        <h3 id="click-using-an-attribute-selector">12. Click Using an Attribute
+        Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;input[type=\&quot;checkbox\&quot;]&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on an input element
+        of type <code>checkbox</code>. Attribute selectors are useful for
+        targeting elements with specific attributes.</p>
+        <h3 id="fill-using-a-placeholder-selector">13. Fill Using a Placeholder
+        Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>fill &quot;input[placeholder=\&quot;Enter your name\&quot;]&quot; with &quot;Jane Doe&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command fills an input field that
+        has a placeholder text of “Enter your name” with the value “Jane Doe”.
+        Placeholder attributes are commonly used for guiding users.</p>
+        <h3 id="click-using-a-class-and-position-selector">14. Click Using a
+        Class and Position Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;.list-item:nth-of-type(2)&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on the second
+        element with the class <code>list-item</code>. Position selectors like
+        <code>:nth-of-type()</code> help in selecting elements based on their
+        order.</p>
+        <h3 id="check-text-within-a-specific-element">15. Check Text Within a
+        Specific Element</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>check-text &quot;Error&quot; is-present in &quot;div.alert-danger&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command checks if the text “Error”
+        is present within a specific element with the selector
+        <code>div.alert-danger</code>. This is useful when the text needs to be
+        verified within a certain context.</p>
+        <h3 id="assert-element-using-multiple-classes">16. Assert Element Using
+        Multiple Classes</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>assert element present &quot;div.card.card-info&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command asserts the presence of a
+        <code>div</code> element with multiple classes <code>card</code> and
+        <code>card-info</code>. This is helpful for targeting elements that
+        share multiple styles or categories.</p>
+        <h3 id="retrieve-content-using-attribute-and-class-selector">17.
+        Retrieve Content Using Attribute and Class Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>get element content &quot;div[data-status=\&quot;active\&quot;].user-info&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command gets the content of a
+        <code>div</code> element with the attribute
+        <code>data-status="active"</code> and the class <code>user-info</code>.
+        This helps in targeting specific elements dynamically generated or
+        filtered by status.</p>
+        <h3 id="click-using-a-child-selector">18. Click Using a Child
+        Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;div.container &gt; button.btn-submit&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on a button with
+        the class <code>btn-submit</code> that is a direct child of a
+        <code>div</code> element with the class <code>container</code>. Child
+        selectors help in targeting elements within a specific parent.</p>
+        <h3 id="click-using-a-general-sibling-selector">19. Click Using a
+        General Sibling Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;label + input[type=\&quot;text\&quot;]&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on an input element
+        of type <code>text</code> that is immediately after a <code>label</code>
+        element. The <code>+</code> selector is useful for selecting siblings
+        that are adjacent.</p>
+        <h3 id="click-using-an-attribute-starts-with-selector">20. Click Using
+        an Attribute Starts-With Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;a[href^=\&quot;https://example.com\&quot;]&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on an anchor tag
+        (<code>a</code>) where the <code>href</code> attribute starts with
+        <code>https://example.com</code>. The <code>^=</code> selector is useful
+        for partial matches at the beginning of an attribute value.</p>
+        <h3 id="click-using-an-attribute-ends-with-selector">21. Click Using an
+        Attribute Ends-With Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;img[src$=\&quot;.png\&quot;]&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on an
+        <code>img</code> element where the <code>src</code> attribute ends with
+        <code>.png</code>. The <code>$=</code> selector is used for matching
+        elements with attributes that end with a certain value.</p>
+        <h3 id="click-using-an-attribute-contains-selector">22. Click Using an
+        Attribute Contains Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;button[class*=&#39;-primary&#39;]&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks on a button element
+        where the <code>class</code> attribute contains <code>-primary</code>.
+        The <code>*=</code> selector is useful for matching elements with an
+        attribute that contains a specific substring.</p>
+        <h3 id="fill-input-field-using-a-complex-selector">23. Fill Input Field
+        Using a Complex Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>fill &quot;form#login-form input[name=\&quot;username\&quot;]&quot; with &quot;admin&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command fills the input field
+        named <code>username</code> inside a form with the ID
+        <code>login-form</code> with the value <code>admin</code>. Complex
+        selectors allow for precise targeting of elements in nested
+        structures.</p>
+        <h3 id="assert-presence-of-element-using-pseudo-class">24. Assert
+        Presence of Element Using Pseudo-Class</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>assert element present &quot;ul &gt; li:first-child&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command asserts that the first
+        <code>li</code> element within a <code>ul</code> list is present.
+        Pseudo-classes like <code>:first-child</code> are useful for targeting
+        specific positions within a group of elements.</p>
+        <h3 id="click-using-descendant-selector">25. Click Using Descendant
+        Selector</h3>
+        <p><strong>Command:</strong></p>
+        <pre><code>click &quot;div.container button.btn-success&quot;</code></pre>
+        <p><strong>Explanation:</strong> This command clicks a button with the
+        class <code>btn-success</code> that is a descendant of a
+        <code>div</code> element with the class <code>container</code>. The
+        descendant selector allows for targeting elements within a
+        hierarchy.</p>
+        
+    </div>
+</div>
+<hr>
+
+<div class="row">
+    <div class="col-md-10">
+        <h1>More examples</h1>
+        <p>DSLExecutor Command Examples</p>
+        <p>Below are multiple examples for each command. These examples show
+        different use cases of each command, using various selectors and
+        scenarios to illustrate their versatility.</p>
+        <h2 id="fill-command-examples">Fill Command Examples</h2>
+        <ol class="incremental" type="1">
+        <li><code>fill "#first_name" with "John"</code></li>
+        <li><code>fill "input[placeholder='Enter email']" with "john@example.com"</code></li>
+        <li><code>fill "input[type='password']" with "mySecurePassword"</code></li>
+        <li><code>fill "textarea.comment-box" with "This is my comment."</code></li>
+        <li><code>fill "#user_address" with "123 Main St."</code></li>
+        <li><code>fill "input[name='zip_code']" with "90210"</code></li>
+        <li><code>fill "input[data-id='username']" with "uniqueUser123"</code></li>
+        <li><code>fill "form#signup-form input[name='phone']" with "123-456-7890"</code></li>
+        <li><code>fill "input.contact-field" with "contact@example.com"</code></li>
+        <li><code>fill "textarea[rows='5']" with "This is a multiline text input."</code></li>
+        </ol>
+        <h2 id="click-command-examples">Click Command Examples</h2>
+        <ol class="incremental" type="1">
+        <li><code>click "button[type='submit']"</code></li>
+        <li><code>click ".btn.btn-primary"</code></li>
+        <li><code>click "#logout"</code></li>
+        <li><code>click "div.alert &gt; a.close"</code></li>
+        <li><code>click "a[href='/profile']"</code></li>
+        <li><code>click "li.menu-item:nth-of-type(3)"</code></li>
+        <li><code>click "span.icon-refresh"</code></li>
+        <li><code>click "input[type='checkbox']"</code></li>
+        <li><code>click "#save-button"</code></li>
+        <li><code>click "nav.main-menu a[href='/settings']"</code></li>
+        </ol>
+        <h2 id="check-text-command-examples">Check Text Command Examples</h2>
+        <ol class="incremental" type="1">
+        <li><code>check-text "Login successful" is-present</code></li>
+        <li><code>check-text "User not found" is-present</code></li>
+        <li><code>check-text "Welcome, John!" is-present</code></li>
+        <li><code>check-text "Payment completed" is-present</code></li>
+        <li><code>check-text "Error: invalid credentials" is-present</code></li>
+        <li><code>check-text "Your cart is empty" is-present</code></li>
+        <li><code>check-text "Profile updated successfully" is-present</code></li>
+        <li><code>check-text "Terms and Conditions" is-present</code></li>
+        <li><code>check-text "404 - Page Not Found" is-present</code></li>
+        <li><code>check-text "Subscription confirmed" is-present</code></li>
+        </ol>
+        <h2 id="assert-element-present-command-examples">Assert Element Present
+        Command Examples</h2>
+        <ol class="incremental" type="1">
+        <li><code>assert element present "#profile-picture"</code></li>
+        <li><code>assert element present "div.container"</code></li>
+        <li><code>assert element present "input[type='submit']"</code></li>
+        <li><code>assert element present "ul &gt; li:first-child"</code></li>
+        <li><code>assert element present "div#footer .social-links"</code></li>
+        <li><code>assert element present "form.contact-form"</code></li>
+        <li><code>assert element present "nav .menu-item.active"</code></li>
+        <li><code>assert element present "button[disabled]"</code></li>
+        <li><code>assert element present "header &gt; h1.site-title"</code></li>
+        <li><code>assert element present "div.modal[role='dialog']"</code></li>
+        </ol>
+        <h2 id="get-element-content-command-examples">Get Element Content
+        Command Examples</h2>
+        <ol class="incremental" type="1">
+        <li><code>get element content "table.data-table"</code></li>
+        <li><code>get element content "div#main-content"</code></li>
+        <li><code>get element content "span.price-tag"</code></li>
+        <li><code>get element content "p.description-text"</code></li>
+        <li><code>get element content "h1.page-title"</code></li>
+        <li><code>get element content "ul.list-items &gt; li:nth-child(2)"</code></li>
+        <li><code>get element content "section#about-us"</code></li>
+        <li><code>get element content "a[href='/contact']"</code></li>
+        <li><code>get element content "footer .address"</code></li>
+        <li><code>get element content "div.alert-message"</code></li>
+        </ol>
+        <h2 id="click-using-attribute-selector-command-examples">Click Using
+        Attribute Selector Command Examples</h2>
+        <ol class="incremental" type="1">
+        <li><code>click "a[data-toggle='dropdown']"</code></li>
+        <li><code>click "input[aria-label='Search']"</code></li>
+        <li><code>click "button[title='Save Changes']"</code></li>
+        <li><code>click "div[role='alert']"</code></li>
+        <li><code>click "li[data-active='true']"</code></li>
+        <li><code>click "img[alt='Product Image']"</code></li>
+        <li><code>click "button[aria-expanded='false']"</code></li>
+        <li><code>click "input[required]"</code></li>
+        <li><code>click "select[name='country']"</code></li>
+        <li><code>click "a[target='_blank']"</code></li>
+        </ol>
+        <h2 id="fill-using-placeholder-selector-command-examples">Fill Using
+        Placeholder Selector Command Examples</h2>
+        <ol class="incremental" type="1">
+        <li><code>fill "input[placeholder='Full Name']" with "Jane Doe"</code></li>
+        <li><code>fill "input[placeholder='Enter your password']" with "safePassword123"</code></li>
+        <li><code>fill "textarea[placeholder='Leave your comment here']" with "Great product!"</code></li>
+        <li><code>fill "input[placeholder='Search']" with "Django tutorials"</code></li>
+        <li><code>fill "input[placeholder='Email address']" with "jane@example.com"</code></li>
+        <li><code>fill "input[placeholder='Phone Number']" with "1234567890"</code></li>
+        <li><code>fill "textarea[placeholder='Describe your issue']" with "The app crashes on login."</code></li>
+        <li><code>fill "input[placeholder='Username']" with "jane_doe"</code></li>
+        <li><code>fill "input[placeholder='ZIP code']" with "12345"</code></li>
+        <li><code>fill "input[placeholder='Confirm Password']" with "safePassword123"</code></li>
+        </ol>
+        <h2 id="click-using-child-selector-command-examples">Click Using Child
+        Selector Command Examples</h2>
+        <ol class="incremental" type="1">
+        <li><code>click "div.container &gt; button.submit"</code></li>
+        <li><code>click "ul.list &gt; li.item:first-child"</code></li>
+        <li><code>click "div.card &gt; a.read-more"</code></li>
+        <li><code>click "form#signup-form &gt; input[type='text']"</code></li>
+        <li><code>click "section.news &gt; article:first-child"</code></li>
+        <li><code>click "nav.menu &gt; ul &gt; li:nth-child(2)"</code></li>
+        <li><code>click "div.panel &gt; button.toggle"</code></li>
+        <li><code>click "div.wrapper &gt; a.link"</code></li>
+        <li><code>click "header &gt; nav &gt; ul &gt; li:last-child"</code></li>
+        <li><code>click "div.row &gt; div.col-md-6 &gt; button.buy-now"</code></li>
+        </ol>
+
+        
+</div>
+</div>
+
+{% endblock %}

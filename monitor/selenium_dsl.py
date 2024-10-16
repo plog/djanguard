@@ -109,6 +109,14 @@ class CommandHandler:
                 await self.page.wait_for_timeout(2000)
         return False
 
+    async def get_element_content(self, selector):
+        print(f'Getting content of element: {selector}')
+        await self.page.wait_for_selector(selector, timeout=10000)
+        element_content = await self.page.locator(selector).inner_html()
+        print(f'Content of element {selector}: {element_content[:200]}...')  # Log a portion of the content for debugging
+        return element_content
+        
+
 class DSLExecutor:
     def __init__(self, action):
         self.action           = action

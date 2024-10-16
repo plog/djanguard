@@ -73,14 +73,16 @@
 
     <footer class="fixed-bottom p-3 bg-dark-subtle">
         <div class="container text-center">
-            {% if user.is_superuser %}Superuser -{% endif %}
+            {% if user.is_superuser %}<a href="/{{ ADMIN_URL }}/">Admin</a> -{% endif %}
             <a href="{% url 'home'%}">Home</a> -   
+            <a href="{% url 'web_board'%}">Board</a> - 
+            <a href="{% url 'commands'%}">Commands</a> -   
             <a href="{% url 'privacy'%}">Privacy</a> -     
             <a href="{% url 'terms'%}">Terms</a> -     
-            <a href="{% url 'web_board'%}">My Board</a> - 
             <a href="{% url 'contact'%}">Contact us</a>
         </div>
     </footer>    
+    
 </body>
 
 </html>

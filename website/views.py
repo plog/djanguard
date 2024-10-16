@@ -38,6 +38,9 @@ class PrivacyView(TemplateView):
 class TermsView(TemplateView):
     template_name = 'terms.html'
     
+class TermsView(TemplateView):
+    template_name = 'commands.html'
+    
 @method_decorator(csrf_exempt, name='dispatch')
 class GoogleAuthView(View):
     def post(self, request, *args, **kwargs):
