@@ -189,3 +189,34 @@ span.frequency{
     mask-composite: exclude;
     z-index: -1000;
 }
+
+
+/* Border boxes */
+.box2 {
+    position: relative;
+    padding: 10px 9px 25px 10px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 15px;
+}
+.box2 .box-content {
+    padding: 10px 7px 0px 5px;
+}
+.box2 table {
+    padding: 0;
+    margin:0;
+}
+.box2 h2{
+    padding: 10px 0px 10px 20px;
+    background-color: #66d32f;
+}
+.box2::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background: linear-gradient(140deg, rgb(68 107 156), #7f96df, #66d32f, green, indigo, #263d73) border-box;
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    z-index: -1000;
+}

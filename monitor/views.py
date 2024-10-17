@@ -19,6 +19,7 @@ from PIL import Image
 from .tasks import run_playwright_action
 from .models import Action, Sensor, TestResult, UserProfile
 from .serializers import ActionSerializer, SensorSerializer, TestResultSerializer
+from rest_framework import viewsets
 
 import logging
 import os
@@ -316,3 +317,36 @@ class ActionScreenshotAPIView(APIView):
         except Exception as e:
             logger.error(f"Error retrieving screenshot for action {action_id}: {str(e)}")
             return Response({"error": "An error occurred while retrieving the screenshot."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Alpine.js
+# -----------------   
+class SensorViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class   = SensorSerializer
+    
+    def get_queryset(self):
+        return Sensor.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Save the sensor with the currently authenticated user
+        serializer.save(user=self.request.user)
+            
+class ActionViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class   = ActionSerializer
+
+    def get_queryset(self):
+        sensor_id = self.request.query_params.get('sensor', None)
+        if sensor_id:
+            return Action.objects.filter(sensor__id=sensor_id, sensor__user=self.request.user)
+        return Action.objects.filter(sensor__user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Save the action associated with the specified sensor
+        # Ensure the sensor belongs to the connected user
+        sensor = serializer.validated_data['sensor']
+        if sensor.user != self.request.user:
+            raise PermissionDenied("You do not have permission to add actions to this sensor.")
+        
+        serializer.save()        

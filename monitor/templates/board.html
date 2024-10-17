@@ -1,217 +1,259 @@
 {% extends "monitor_base.html" %}
 {% load static %}
-
+{% load form_tags %}
 {% block content %}
-<div class="container my-4">
-    <select class="form-control" id="timezone"></select>
-    <h1 class="mb-4">Sensor Dashboard</h1>
-    <div class="row" id="sensor-container">
-        <!-- Sensors will be loaded here via AJAX -->
+
+<div x-data="sensorData()" x-init="init()" class="box2">
+    <h2>Sensors &nbsp; <a @click="showAddSensorForm()"><i class="bi bi-plus-square-fill"></i></a></h2>
+    <div class="box-content">
+        <table id="sensor-table" class="table">
+            <template x-for="sensor in sensors" :key="sensor.id">
+                <tr>
+                    <td nowrap><span x-text="sensor.name"></span></td>
+                    <td nowrap><span x-text="sensor.frequency"></span> s.</td>
+                    <td nowrap>
+                        <a @click="editSensor(sensor)"><i class="bi bi-pencil-square"></i></a>
+                        <a @click="deleteSensor(sensor.id)"><i class="bi bi-trash3-fill"></i></a>
+                        <a @click="selectSensor(sensor)"><i class="bi bi-eye"></i></a> <!-- Load actions when sensor is clicked -->
+                    </td>
+                </tr>
+            </template>
+        </table>
     </div>
+
+    <!-- Sensor Add/Edit Form -->
+    <div x-show="isSensorFormVisible" class="box-content">
+        <form @submit.prevent="submitSensorForm()">
+            <div class="row">
+                <div class="col">
+                    <label class="form-label">Name:</label>
+                    <input type="text" class="form-control" x-model="sensorForm.name" required>
+                </div>
+                <div class="col">
+                    <label class="form-label">Frequency (seconds):</label>
+                    <input type="number" class="form-control" x-model="sensorForm.frequency" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <label class="form-label">Base URL</label>
+                    <input type="text" class="form-control" x-model="sensorForm.url" required>
+                </div>
+            </div>                    
+            
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-success" x-text="sensorFormMode === 'edit' ? 'Update' : 'Add'"></button>
+                <button type="button" class="btn btn-secondary" @click="cancelSensorForm()">Cancel</button>
+            </div>
+        </form>
+    </div>
+
 </div>
 
+<div x-data="actionData()" x-init="clearActions()" class="box2">
+    <h2>Actions &nbsp; <a @click="showAddActionForm()"><i class="bi bi-plus-square-fill"></i></a></h2>
+    <div class="box-content">
+        <table id="action-table" class="table table-striped">
+            <template x-for="action in actions" :key="action.id">
+                <tr>
+                    <td nowrap><span x-text="action.action_name"></span></td>
+                    <td nowrap>
+                        <a @click="editAction(action)"><i class="bi bi-pencil-square"></i></a>
+                        <a @click="deleteAction(action.id)"><i class="bi bi-trash3-fill"></i></a>
+                    </td>
+                </tr>
+            </template>
+        </table>        
+    </div>
+
+    <!-- Action Add/Edit Form -->
+    <div x-show="isActionFormVisible" class="box-content">
+        <form @submit.prevent="submitActionForm()">
+            <div>
+                <label for="action-name" class="form-label">Action Name:</label>
+                <input type="text" class="form-control" id="action-name" x-model="actionForm.action_name" required>
+            </div>
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-success" x-text="actionFormMode === 'edit' ? 'Update' : 'Add'"></button>
+                <button type="button" class="btn btn-secondary" @click="cancelActionForm()">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+
+    
 <script>
-    document.addEventListener('DOMContentLoaded', async function() {
-        setupTimezoneSelector();
-        fetchSensors();
-        window.addEventListener('resize', resizeAllCharts);
-    });
-
-    function fetchSensors() {
-        $.ajax({
-            url: '/api/sensor/', 
-            type: 'GET',
-            success: function(sensors) {
-                sensors.forEach(sensor => {
-                    $('#sensor-container').append(`
-                        <div class="col-12 col-sm-6 col-lg-4 mb-3">
-                            <div class="card box">
-                                <div class="card-header pt-3">
-                                    <h5 class="card-title">
-                                        ${sensor.favico ? '<img src="'+sensor.favico+'" height="15">' : ''}
-                                        ${sensor.name}&nbsp;
-                                        <a href="/sensor/${sensor.id}/"><i class="bi bi-pencil-square"></i></a>
-                                        <a href="#" class="sensor-delete-btn text-dangermx-2" data-sensor-id="${sensor.id}"><i class="bi bi-trash3-fill"></i></a>
-                                        <a href=""><i class="bi bi-play-circle-fill"></a></i>
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <p class="card-text">
-                                        <a href="${sensor.url}" class="sensor_url">${sensor.short_url}</a>
-                                        <span class="frequency">&nbsp;(${sensor.frequency} s.)</span>
-                                    </p>
-                                    <div id="actions-${sensor.id}"></div>
-                                </div>
-                            </div>
-                        </div>
-                    `);
-                    fetchActions(sensor.id);
-                });
-                handleDeleteSensor('.sensor-delete-btn' , 'Delete this sensor? THIS ACTION CANNOT BE UNDONE.');
+    function sensorData() {
+        return {
+            sensors: [],
+            sensorForm: { name: '',url: '', frequency: 0 },
+            isSensorFormVisible: false,
+            sensorFormMode: 'add',
+            async init() {
+                await this.fetchSensors();
             },
-            error: function(error) {
-                console.error('Error fetching sensors:', error);
-            }
-        });
-    }
-
-    function fetchActions(sensorId) {
-        $.ajax({
-            url: `/api/action/?sensor=${sensorId}`, // Using the correct API endpoint for actions
-            type: 'GET',
-            success: function(actions) {
-                actions.forEach(action => {
-                    let img = ''
-                    if(action.assertion_type == 'screenshot'){
-                        img = '<img class="img-fluid" src="/api/action/' + action.id + '/screenshot/">';
+            async fetchSensors() {
+                try {
+                    const response = await fetch('/api/sensors/');
+                    if (response.ok) {
+                        this.sensors = await response.json();
+                    } else {
+                        console.error('Failed to fetch sensors');
                     }
-                    $(`#actions-${sensorId}`).append(`
-                        <div class="action-graph">
-                            <h3 class="board">${action.action_name} (${action.action_type})</h3>
-                            <div id="chart-action-${action.id}" class="chart-container" style="height: 30px; width: 90%;"></div>
-                        ${img}
-                        </div>
-                    `);
-                    fetchTestResults(action.id);
+                } catch (error) {
+                    console.error('Error fetching sensors:', error);
+                }
+            },
+            showAddSensorForm() {
+                this.sensorFormMode = 'add';
+                this.sensorForm = { name: '', frequency: 0 };
+                this.isSensorFormVisible = true;
+            },
+            editSensor(sensor) {
+                this.sensorFormMode = 'edit';
+                this.sensorForm = { ...sensor };
+                this.isSensorFormVisible = true;
+                this.dispachSensor();
+            },
+            cancelSensorForm() {
+                this.isSensorFormVisible = false;
+            },
+            async submitSensorForm() {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const url       = this.sensorFormMode === 'edit' ? `/api/sensors/${this.sensorForm.id}/` : '/api/sensors/';
+                const method    = this.sensorFormMode === 'edit' ? 'PUT' : 'POST';
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {'Content-Type': 'application/json','X-CSRFToken': csrfToken},
+                        body: JSON.stringify(this.sensorForm)
+                    });
+                    if (response.ok) {
+                        this.isSensorFormVisible = false;
+                        await this.fetchSensors();
+                    } else {
+                        console.error('Failed to submit sensor form');
+                    }
+                } catch (error) {
+                    console.error('Error submitting sensor form:', error);
+                }
+            },
+            selectSensor(sensor) {
+                this.isSensorFormVisible = false;
+                this.dispachSensor();
+            },
+            dispachSensor(){
+                // Dispatch a custom event when a sensor is selected
+                window.dispatchEvent(new CustomEvent('sensor-selected', { detail: { sensorId: this.sensor.id } }));
+            },
+            async deleteSensor(id) {
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const response = await fetch(`/api/sensors/${id}/`, {
+                        method: 'DELETE',
+                        headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
+                        credentials: 'same-origin'
+                    });
+                    if (response.ok) {
+                        await this.fetchSensors();
+                    } else {
+                        console.error('Failed to delete sensor', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error deleting sensor:', error);
+                }
+            }
+        };
+    }
+
+    function actionData() {
+        return {
+            actions: [],
+            actionForm: { action_name: '' },
+            isActionFormVisible: false,
+            actionFormMode: 'add',
+            async fetchActions(sensorId) {
+                try {
+                    const response = await fetch(`/api/actions/?sensor=${sensorId}`);
+                    if (response.ok) {
+                        this.actions = await response.json();
+                    } else {
+                        console.error('Failed to fetch actions');
+                    }
+                } catch (error) {
+                    console.error('Error fetching actions:', error);
+                }
+            },
+            clearActions() {
+                this.actions = [];
+            },
+            init() {
+                // Listen for the custom event and fetch actions based on the selected sensor
+                window.addEventListener('sensor-selected', (event) => {
+                    console.log('sensor-selected',event.detail.sensorId)
+                    this.clearActions();
+                    this.fetchActions(event.detail.sensorId);
+                    this.actionForm.sensor = event.detail.sensorId;
+                    this.selectedSensorId  = event.detail.sensorId;
+                    this.isActionFormVisible = false;
                 });
             },
-            error: function(error) {
-                console.error('Error fetching actions:', error);
-            }
-        });
-    }
-
-    function fetchTestResults(actionId) {
-        if (!window.testResultsCache) {
-            window.testResultsCache = {};
-        }
-
-        if (window.testResultsCache[actionId]) {
-            renderTimeline(actionId, window.testResultsCache[actionId]);
-        }else{
-            $.ajax({
-                url: `/api/test-result/?action=${actionId}`,
-                type: 'GET',
-                success: function(result) {
-                    window.testResultsCache[actionId] = result;
-                    console.log(`ACTION ${actionId}:` , result.length)
-                    renderTimeline(actionId, result);
-                },
-                error: function(error) {
-                    console.error('Error fetching test results:', error);
+            showAddActionForm() {
+                this.actionFormMode = 'add';
+                this.actionForm = { action_name: '' };
+                this.isActionFormVisible = true;
+            },
+            editAction(action) {
+                this.actionFormMode = 'edit';
+                this.actionForm = { ...action };
+                this.isActionFormVisible = true;
+            },
+            cancelActionForm() {
+                this.isActionFormVisible = false;
+            },
+            async submitActionForm() {
+                const csrfToken        = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const url              = this.actionFormMode === 'edit' ? `/api/actions/${this.actionForm.id}/` : '/api/actions/';
+                const method           = this.actionFormMode === 'edit' ? 'PUT' : 'POST';
+                try {
+                    console.log(this.actionForm)
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {'Content-Type': 'application/json','X-CSRFToken': csrfToken},
+                        body: JSON.stringify(this.actionForm)
+                    });
+                    if (response.ok) {
+                        this.isActionFormVisible = false;
+                        await this.fetchActions(this.selectedSensorId); // Ensure actions are refreshed
+                    } else {
+                        console.error('Failed to submit action form');
+                    }
+                } catch (error) {
+                    console.error('Error submitting action form:', error);
                 }
-            });
-        }
-    }
-
-    function renderTimeline(actionId, testResults) {
-        const chartElement = d3.select(`#chart-action-${actionId}`);
-        chartElement.style.display = 'none';
-        chartElement.html(""); // Clear previous chart
-
-        if(testResults.length == 0){
-            chartElement.html("No data");
-            chartElement.style.display = 'block';
-            return
-        }
-
-        const margin = {top: 0, right: 25, bottom: 20, left: 0};
-        const width  = (chartElement.node().parentNode.clientWidth - margin.left - margin.right);
-        const height = 25 - margin.top - margin.bottom;
-
-        const svg = chartElement
-            .append("svg")
-            .attr("width"   , (width + margin.left + margin.right))
-            .attr("height"  , height + margin.top + margin.bottom)
-            .attr("viewBox" , `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
-            .attr("preserveAspectRatio", "xMinYMin meet")
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        const parseTime = d3.isoParse;
-
-        const data = testResults.map(result => ({
-            id         : parseInt(result.id),
-            action_id  : parseInt(result.action),
-            timestamp  : formatDate(result.timestamp),
-            value      : result.actual_value,
-            body       : result.body
-        }));
-
-         // Create a tooltip div (hidden by default)
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("position", "absolute")
-            .style("padding", "5px")
-            .style("background", "rgba(0, 0, 0, 0.7)")
-            .style("color", "#fff")
-            .style("border-radius", "3px")
-            .style("pointer-events", "none")
-            .style("opacity", 0); // Hidden initially
-
-        // console.log("DATA",data)
-        const x = d3.scaleTime()
-            .domain(d3.extent(data, d => d.timestamp))
-            .range([0, width]);
-            svg.append("g")
-            .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x).ticks(5).tickFormat(d => {
-                const timezone = localStorage.getItem('selectedTimezone') || 'UTC';
-                return moment(d).tz(timezone).format("HH:mm"); // Use Moment.js to format in 24-hour time
-            }));
-
-        const colorScale = d3.scaleOrdinal()
-            .domain(["200"  , "403"   , "500", "404", "fail"])
-            .range(["green" , "orange", "red", "red", "red"]);
-
-        svg.selectAll("rect")
-            .data(data)
-            .enter()
-            .append("rect")
-            .attr("x", d => x(d.timestamp))
-            .attr("y", 0)
-            .attr("width", 3) // Fixed width for better visibility of events
-            .attr("height", height)
-            .attr("fill", d => colorScale(d.value))
-            .on("mouseover", function (event, d) {
-                const content = d.body ? d.body : d.value;
-                tooltip.transition().duration(200).style("opacity", 0.8);
-                tooltip.html(`${content}`)
-                    .style("left", (event.pageX + 5) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mousemove", function (event) {
-                tooltip.style("left", (event.pageX + 5) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", function () {
-                tooltip.transition().duration(500).style("opacity", 0);
-            });
-
-        chartElement.style.display = 'block';
-    }
-
-    function resizeAllCharts() {
-    // Add the 'hidden' class to trigger the fade-out effect
-    d3.selectAll(".chart-container").classed("hidden", true);
-
-    clearTimeout(window.resizeTimeout);
-    window.resizeTimeout = setTimeout(() => {
-        d3.selectAll(".chart-container").each(function() {
-            const actionId = this.id.split("-action-")[1];
-            if (window.testResultsCache && window.testResultsCache[actionId]) {
-                renderTimeline(actionId, window.testResultsCache[actionId]);
+            },
+            async deleteAction(id) {
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const response = await fetch(`/api/actions/${id}/`, {
+                        method: 'DELETE',
+                        headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
+                        credentials: 'same-origin'
+                    });
+                    if (response.ok) {
+                        this.clearActions();
+                    } else {
+                        console.error('Failed to delete action', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error deleting action:', error);
+                }
             }
-        });
-
-        // Remove the 'hidden' class to trigger the fade-in effect after re-rendering
-        setTimeout(() => {
-            d3.selectAll(".chart-container").classed("hidden", false);
-        }, 150); // Add a small delay to ensure renderTimeline has enough time to finish
-    }, 150);
-}
-
-
+        };
+    }
 </script>
 
 {% endblock %}
