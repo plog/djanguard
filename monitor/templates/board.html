@@ -6,14 +6,16 @@
 <div x-data="sensorData()" x-init="init()" class="box2">
     <h2>Sensors &nbsp; <a @click="showAddSensorForm()"><i class="bi bi-plus-square-fill"></i></a></h2>
     <div class="box-content">
-        <table id="sensor-table" class="table">
-            <template x-for="sensor in sensors" :key="sensor.id">
-                <tr>
+        <table id="sensor-table table-striped" class="table">
+            <template x-for="(sensor, index) in sensors" :key="sensor.id" :key="sensor.id">
+                <tr :class="index % 2 === 0 ? 'table-row-light' : 'table-row-dark'">
                     <td nowrap><span x-text="sensor.name"></span></td>
                     <td nowrap><span x-text="sensor.frequency"></span> s.</td>
                     <td nowrap>
                         <a @click="editSensor(sensor)"><i class="bi bi-pencil-square"></i></a>
+                        &nbsp;&nbsp;
                         <a @click="deleteSensor(sensor.id)"><i class="bi bi-trash3-fill"></i></a>
+                        &nbsp;&nbsp;
                         <a @click="selectSensor(sensor)"><i class="bi bi-eye"></i></a> <!-- Load actions when sensor is clicked -->
                     </td>
                 </tr>
@@ -28,10 +30,15 @@
                 <div class="col">
                     <label class="form-label">Name:</label>
                     <input type="text" class="form-control" x-model="sensorForm.name" required>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.name" x-text="errors.name ? errors.name[0] : ''"></div>
                 </div>
                 <div class="col">
                     <label class="form-label">Frequency (seconds):</label>
                     <input type="number" class="form-control" x-model="sensorForm.frequency" required>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.frequency" x-text="errors.frequency ? errors.frequency[0] : ''"></div>
+
                 </div>
             </div>
 
@@ -39,12 +46,15 @@
                 <div class="col">
                     <label class="form-label">Base URL</label>
                     <input type="text" class="form-control" x-model="sensorForm.url" required>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.url" x-text="errors.url ? errors.url[0] : ''"></div>
+
                 </div>
             </div>                    
             
-            <div class="d-flex justify-content-between">
-                <button type="submit" class="btn btn-success" x-text="sensorFormMode === 'edit' ? 'Update' : 'Add'"></button>
-                <button type="button" class="btn btn-secondary" @click="cancelSensorForm()">Cancel</button>
+            <div class="d-flex justify-content-between mt-3">
+                <button type="submit" class="btn btn-sm btn-success" x-text="sensorFormMode === 'edit' ? 'Update' : 'Add'"></button>
+                <button type="button" class="btn btn-sm btn-secondary" @click="cancelSensorForm()">Cancel</button>
             </div>
         </form>
     </div>
@@ -52,14 +62,20 @@
 </div>
 
 <div x-data="actionData()" x-init="clearActions()" class="box2">
-    <h2>Actions &nbsp; <a @click="showAddActionForm()"><i class="bi bi-plus-square-fill"></i></a></h2>
+    <h2>
+        <span x-text="`${selectedSensorName?selectedSensorName:'Actions'}`"></span>
+        <span x-show="selectedSensorId">
+            &nbsp; <a @click="showAddActionForm()"><i class="bi bi-plus-square-fill"></i></a>
+        </span>
+    </h2>
     <div class="box-content">
         <table id="action-table" class="table table-striped">
-            <template x-for="action in actions" :key="action.id">
-                <tr>
+            <template x-for="(action, index) in actions" :key="action.id">
+                <tr :class="index % 2 === 0 ? 'table-row-light' : 'table-row-dark'">
                     <td nowrap><span x-text="action.action_name"></span></td>
                     <td nowrap>
                         <a @click="editAction(action)"><i class="bi bi-pencil-square"></i></a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
                         <a @click="deleteAction(action.id)"><i class="bi bi-trash3-fill"></i></a>
                     </td>
                 </tr>
@@ -70,28 +86,99 @@
     <!-- Action Add/Edit Form -->
     <div x-show="isActionFormVisible" class="box-content">
         <form @submit.prevent="submitActionForm()">
-            <div>
-                <label for="action-name" class="form-label">Action Name:</label>
-                <input type="text" class="form-control" id="action-name" x-model="actionForm.action_name" required>
+            <div class="row">
+                <div class="col">
+                    <label for="action-name" class="form-label">Action Name:</label>
+                    <input type="text" class="form-control" id="action-name" x-model="actionForm.action_name" required>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.action_name" x-text="errors.action_name ? errors.action_name[0] : ''"></div>
+                </div>
             </div>
-            <div class="d-flex justify-content-between">
-                <button type="submit" class="btn btn-success" x-text="actionFormMode === 'edit' ? 'Update' : 'Add'"></button>
-                <button type="button" class="btn btn-secondary" @click="cancelActionForm()">Cancel</button>
+
+            <div class="row">
+                <div class="col">
+                    <label for="action-path" class="form-label">Action Path:</label>
+                    <input type="text" class="form-control" id="action-path" x-model="actionForm.action_path" required>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.action_path" x-text="errors.action_path ? errors.action_path[0] : ''"></div>
+                </div>
+            </div>    
+
+            <div class="row">
+                <div class="col">
+                    <label for="assertion-type" class="form-label">Assertion Type:</label>
+                    <select class="form-select" id="assertion-type" x-model="actionForm.assertion_type" @change="updateVisibilityFlags()" required>
+                        <template x-for="assertion in ASSERTION_TYPES" :key="assertion.value">
+                            <option :value="assertion.value" x-text="assertion.label"></option>
+                        </template>
+                    </select>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.assertion_type" x-text="errors.assertion_type ? errors.assertion_type[0] : ''"></div>
+                </div>
+            </div>
+            <!-- ---------- conditional diaplay ----------- -->
+            <div class="row" x-show="showExpectedValue">
+                <div class="col">
+                    <label for="expected-value" class="form-label">Expected value:</label>
+                    <input type="text" class="form-control" id="expected-value" x-model="actionForm.expected_value" required>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.expected_value" x-text="errors.expected_value ? errors.expected_value[0] : ''"></div>
+                </div>
+            </div>  
+
+            <div class="row" x-show="showActionType">
+                <div class="col">
+                    <label for="action-type" class="form-label">Action Type:</label>
+                    <select class="form-select" id="action-type" x-model="actionForm.action_type" required>
+                        <template x-for="verb in HTTP_VERBS" :key="verb.value">
+                            <option :value="verb.value" x-text="verb.label"></option>
+                        </template>
+                    </select>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.action_type" x-text="errors.action_type ? errors.action_type[0] : ''"></div>
+                </div>
+            </div>
+
+            <div class="row" x-show="showSeleniumScript">
+                <div class="col">
+                    <label for="selenium-script" class="form-label">Selenium Script:</label>
+                    <textarea class="form-control" id="selenium-script" x-model="actionForm.selenium_script" rows="3"></textarea>
+                    <div class="text-danger" x-show="errors.selenium_script" x-text="errors.selenium_script ? errors.selenium_script[0] : ''"></div>
+                </div>
+            </div>
+
+            <div class="row" x-show="showPayload">
+                <div class="col">
+                    <label for="payload" class="form-label">Payload (JSON):</label>
+                    <textarea class="form-control" id="payload" x-model="actionForm.payload" rows="3"></textarea>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.payload" x-text="errors.payload ? errors.payload[0] : ''"></div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+                <button type="submit" class="btn btn-sm btn-success" x-text="actionFormMode === 'edit' ? 'Update' : 'Add'"></button>
+                <button type="button" class="btn btn-sm btn-warning" @click="cancelActionForm()">Test</button>
+                <button type="button" class="btn btn-sm btn-secondary" @click="cancelActionForm()">Cancel</button>
             </div>
         </form>
     </div>
 
 </div>
 
-
+<script>
+const user = parseInt({{request.user.id}});
+</script>
     
 <script>
     function sensorData() {
         return {
             sensors: [],
-            sensorForm: { name: '',url: '', frequency: 0 },
+            sensorForm: { name: '',url: '', frequency: 0, user:user },
             isSensorFormVisible: false,
             sensorFormMode: 'add',
+            errors: {},
+
             async init() {
                 await this.fetchSensors();
             },
@@ -113,19 +200,23 @@
                 this.isSensorFormVisible = true;
             },
             editSensor(sensor) {
+                this.errors         = {};
                 this.sensorFormMode = 'edit';
-                this.sensorForm = { ...sensor };
+                this.sensorForm     = { ...sensor };
                 this.isSensorFormVisible = true;
                 this.dispachSensor();
             },
             cancelSensorForm() {
+                this.errors              = {};
                 this.isSensorFormVisible = false;
             },
             async submitSensorForm() {
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                const url       = this.sensorFormMode === 'edit' ? `/api/sensors/${this.sensorForm.id}/` : '/api/sensors/';
-                const method    = this.sensorFormMode === 'edit' ? 'PUT' : 'POST';
+                const csrfToken      = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const url            = this.sensorFormMode === 'edit' ? `/api/sensors/${this.sensorForm.id}/` : '/api/sensors/';
+                const method         = this.sensorFormMode === 'edit' ? 'PUT' : 'POST';
+                this.sensorForm.user = user;
                 try {
+                    console.log(this.sensorForm)
                     const response = await fetch(url, {
                         method: method,
                         headers: {'Content-Type': 'application/json','X-CSRFToken': csrfToken},
@@ -134,6 +225,10 @@
                     if (response.ok) {
                         this.isSensorFormVisible = false;
                         await this.fetchSensors();
+                    } else if (response.status === 400) {
+                        // Handle validation errors
+                        const errorData = await response.json();
+                        this.errors = errorData; // Capture validation errors                        
                     } else {
                         console.error('Failed to submit sensor form');
                     }
@@ -142,12 +237,18 @@
                 }
             },
             selectSensor(sensor) {
+                this.errors              = {};
                 this.isSensorFormVisible = false;
                 this.dispachSensor();
             },
             dispachSensor(){
                 // Dispatch a custom event when a sensor is selected
-                window.dispatchEvent(new CustomEvent('sensor-selected', { detail: { sensorId: this.sensor.id } }));
+                window.dispatchEvent(new CustomEvent('sensor-selected', { 
+                    detail: { 
+                        sensorId: this.sensor.id,
+                        sensorName: this.sensor.name
+                    } 
+                }));
             },
             async deleteSensor(id) {
                 try {
@@ -172,9 +273,45 @@
     function actionData() {
         return {
             actions: [],
-            actionForm: { action_name: '' },
+            actionForm: { sensor: this.selectedSensorId },
             isActionFormVisible: false,
             actionFormMode: 'add',
+            errors: {},
+            selectedSensorName: '',  // From sensorData(): To store the selected sensor's name
+            selectedSensorId: null,  // From sensorData(): To store the selected sensor's ID 
+
+            // Visibility flags for the form fields
+            showExpectedValue : false,
+            showActionType    : false,
+            showSeleniumScript: false,
+            showPayload       : false,            
+
+            // Initialize HTTP_VERBS and ASSERTION_TYPES as data properties
+            HTTP_VERBS: [
+                { value: 'GET', label: 'GET' },
+                { value: 'POST', label: 'POST' },
+                { value: 'PUT', label: 'PUT' },
+                { value: 'DELETE', label: 'DELETE' },
+                { value: 'PATCH', label: 'PATCH' },
+                { value: 'HEAD', label: 'HEAD' },
+                { value: 'OPTIONS', label: 'OPTIONS' },
+                { value: 'TRACE', label: 'TRACE' }
+            ],
+            ASSERTION_TYPES: [
+                { value: 'status_code', label: 'Status Code' },
+                { value: 'contains_keyword', label: 'Contains Keyword' },
+                { value: 'selenium', label: 'Selenium Style' },
+                { value: 'screenshot', label: 'Take a screenshot' },
+            ],            
+            updateVisibilityFlags() {
+                // Determine visibility of fields based on assertion type
+                const assertionType     = this.actionForm.assertion_type;
+                console.log(assertionType);
+                this.showExpectedValue  = ['status_code', 'contains_keyword'].includes(assertionType);
+                this.showActionType     = ['status_code', 'contains_keyword'].includes(assertionType);
+                this.showSeleniumScript = assertionType === 'selenium';
+                this.showPayload        = ['status_code', 'contains_keyword'].includes(assertionType);
+            },
             async fetchActions(sensorId) {
                 try {
                     const response = await fetch(`/api/actions/?sensor=${sensorId}`);
@@ -196,30 +333,36 @@
                     console.log('sensor-selected',event.detail.sensorId)
                     this.clearActions();
                     this.fetchActions(event.detail.sensorId);
-                    this.actionForm.sensor = event.detail.sensorId;
-                    this.selectedSensorId  = event.detail.sensorId;
+                    this.updateVisibilityFlags();
+                    this.actionForm.sensor   = event.detail.sensorId;
+                    this.selectedSensorId    = event.detail.sensorId;
+                    this.selectedSensorName  = event.detail.sensorName;
                     this.isActionFormVisible = false;
                 });
             },
             showAddActionForm() {
-                this.actionFormMode = 'add';
-                this.actionForm = { action_name: '' };
+                this.errors              = {};
+                this.actionFormMode      = 'add';
+                this.actionForm          = { sensor: this.selectedSensorId };
                 this.isActionFormVisible = true;
+                this.updateVisibilityFlags();
             },
             editAction(action) {
-                this.actionFormMode = 'edit';
-                this.actionForm = { ...action };
+                this.errors              = {};
+                this.actionFormMode      = 'edit';
+                this.actionForm          = { ...action };
                 this.isActionFormVisible = true;
+                this.updateVisibilityFlags();
             },
             cancelActionForm() {
                 this.isActionFormVisible = false;
             },
             async submitActionForm() {
-                const csrfToken        = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                const url              = this.actionFormMode === 'edit' ? `/api/actions/${this.actionForm.id}/` : '/api/actions/';
-                const method           = this.actionFormMode === 'edit' ? 'PUT' : 'POST';
+                const csrfToken  = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const url        = this.actionFormMode === 'edit' ? `/api/actions/${this.actionForm.id}/` : '/api/actions/';
+                const method     = this.actionFormMode === 'edit' ? 'PUT' : 'POST';
                 try {
-                    console.log(this.actionForm)
+                    console.log('ACTION',this.actionForm)
                     const response = await fetch(url, {
                         method: method,
                         headers: {'Content-Type': 'application/json','X-CSRFToken': csrfToken},
@@ -228,6 +371,10 @@
                     if (response.ok) {
                         this.isActionFormVisible = false;
                         await this.fetchActions(this.selectedSensorId); // Ensure actions are refreshed
+                    } else if (response.status === 400) {
+                        // Handle validation errors
+                        const errorData = await response.json();
+                        this.errors = errorData; // Capture validation errors                          
                     } else {
                         console.error('Failed to submit action form');
                     }
@@ -245,6 +392,7 @@
                     });
                     if (response.ok) {
                         this.clearActions();
+                        this.fetchActions(this.selectedSensorId)
                     } else {
                         console.error('Failed to delete action', response.statusText);
                     }

@@ -13,8 +13,12 @@ body{
     padding-bottom:100px    
 }
 
-.btn, .form-control{
+.btn, 
+.form-control, 
+.form-select,
+input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio" i]){
     border-radius: 3px;
+    padding: .15rem .55rem;
 }
 .navbar-expand-sm {
     padding: 0;
@@ -22,17 +26,44 @@ body{
 .border {
     border: 4px solid #c5c5c5 !important;
 }
+
+.form-control {
+    border: 1px solid #4e5761;
+    background-color: #f3f3f3;
+    margin-bottom: 0px;
+}
+textarea.form-control {
+    font-size: 0.8rem;
+    background-color: #f3f3f3;
+}
+input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio" i]) {
+    font-size: 0.8rem;
+    background-color: #f3f3f3;
+}
 .form-label{
+    margin-bottom: 0;
     font-weight: 800;
     margin-bottom: 0;
     font-size: 0.7rem;
 }
-table th{
-    text-align: center;
+.form-select {
+    font-size: 0.8rem;
+    background-color: #f3f3f3;
+    border: 1px solid #4e5761;
 }
-table th, table td{
-    font-size: 0.9rem;
+.table-row-light{
+    background-color: rgba(0, 0, 0, .05);
+    font-size: 0.8rem;
 }
+.table-row-dark{
+    background-color: rgba(222, 215, 215, 0.05);
+    font-size: 0.8rem;
+}
+.table>:not(caption)>*>* {
+    background-color: transparent;
+}
+
+
 h1 {
     font-size: 1.6rem !important;
     font-weight: 300;
@@ -129,14 +160,6 @@ span.frequency{
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
-.form-control {
-    border: 1px solid #4e5761;
-    margin-bottom: 10px;
-}
-
-.form-label {
-    margin-bottom: 0;
-}
 
 .listurl {
     padding: 3px 0px 0 9px;
@@ -198,6 +221,9 @@ span.frequency{
     backdrop-filter: blur(10px);
     margin-bottom: 15px;
 }
+.box2 .text-danger{
+    font-size: 0.8rem;
+}
 .box2 .box-content {
     padding: 10px 7px 0px 5px;
 }
@@ -205,9 +231,12 @@ span.frequency{
     padding: 0;
     margin:0;
 }
-.box2 h2{
+.box2 h2 {
     padding: 10px 0px 10px 20px;
-    background-color: #66d32f;
+    background-color: #dcecd8;
+    border-radius: 3px;
+    font-weight: 700;
+    color: #377f4b;
 }
 .box2::before {
     content: "";
@@ -215,7 +244,7 @@ span.frequency{
     inset: 0;
     border-radius: 5px;
     border: 2px solid transparent;
-    background: linear-gradient(140deg, rgb(68 107 156), #7f96df, #66d32f, green, indigo, #263d73) border-box;
+    background: linear-gradient(140deg, rgb(9 40 80), #7f96df, #56ff00, green, #2a0c41, #263d73) border-box;
     mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
     z-index: -1000;
