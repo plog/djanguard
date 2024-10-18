@@ -13,15 +13,40 @@
                     <div class="card-header pt-3">
                         <h5>
                             <img :src="sensor.favico ? sensor.favico : '/static/img/default-favicon.ic'" height="15">
-                            <span x-text="sensor.name"></span>&nbsp;
+                            <span x-text="sensor.name"></span>&nbsp;                            
                         </h5>
                     </div>
+
                     <div class="card-body">
                         <p class="card-text">
                             <a :href="sensor.url" class="sensor_url" x-text="sensor.short_url"></a>
                             <span class="frequency" x-text="'(' + sensor.frequency + ' s.)'"></span>
                         </p>
-                        <div :id="'actions-' + sensor.id"></div>
+                        <!-- Actions for this sensor -->
+                        <template x-for="action in actions[sensor.id]" :key="action.id">
+                            <div class="action-graph">
+                                <h3 class="board">
+                                    <span x-text="action.action_name + ' (' + action.action_type + ')'"></span>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;<a href="#" @click.prevent="runTest(action.id)"><i class="bi bi-play-circle-fill text-success"></i></a>
+                                    <div x-show="testResults[action.id]" class="board-test-img">
+                                        <img 
+                                            x-bind:src="testResults[action.id] ? testResults[action.id].img : '/static/img/pixel.png'" 
+                                            width="45" 
+                                            style="margin: 0px 3px 3px 38px;"
+                                            alt="Test Result"
+                                            x-bind:title="testResults[action.id] ? testResults[action.id].message + ' ' + testResults[action.id].response.actual_value : 'No results available'"
+                                            >
+                                    </div>
+                                </h3>
+                                <div :id="'chart-action-' + action.id" class="chart-container" style="height: 30px; width: 90%;"></div>
+                                <template x-if="action.assertion_type === 'screenshot'">
+                                    <div class="image-board">
+                                        <img :src="`/api/action/${action.id}/screenshot/`" class="img-fluid">
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
                     </div>
                 </div>
             </div>
@@ -33,12 +58,19 @@
     function sensorDashboard() {
         return {
             sensors: [],
+            actions: {},
             selectedTimezone: localStorage.getItem('selectedTimezone') || 'UTC',
-            
+            testResults: {},
+
             init() {
                 this.fetchSensors();
                 window.addEventListener('resize', () => {this.resizeAllCharts();});
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });                
             },            
+
             fetchSensors() {
                 fetch('/api/sensors/')
                     .then(response => response.json())
@@ -57,25 +89,17 @@
                 fetch(`/api/actions/?sensor=${sensorId}`)
                     .then(response => response.json())
                     .then(actions => {
-                        actions.forEach(action => {
-                            let img = action.assertion_type === 'screenshot' 
-                                ? `<img class="img-fluid" src="/api/action/${action.id}/screenshot/">` 
-                                : '';
-
-                            document.querySelector(`#actions-${sensorId}`).innerHTML += `
-                                <div class="action-graph">
-                                    <h3 class="board">${action.action_name} (${action.action_type})</h3>
-                                    <div id="chart-action-${action.id}" class="chart-container" style="height: 30px; width: 90%;"></div>
-                                    ${img}
-                                </div>
-                            `;
-                            this.fetchTestResults(action.id);
+                        this.actions[sensorId] = actions;
+                        this.$nextTick(() => {
+                            actions.forEach(action => {
+                                this.fetchTestResults(action.id);
+                            });
                         });
                     })
                     .catch(error => {
                         console.error('Error fetching actions:', error);
                     });
-            },
+                },            
 
             fetchTestResults(actionId) {
                 if (!window.testResultsCache) {
@@ -208,7 +232,6 @@
                         if (window.testResultsCache && window.testResultsCache[actionId]) {
                             // Clear the previous chart properly
                             d3.select(`#chart-action-${actionId}`).selectAll("*").remove();
-
                             // Redraw the chart using the latest cached data
                             self.renderTimeline(actionId, window.testResultsCache[actionId]);
                         }
@@ -218,8 +241,14 @@
                         d3.selectAll(".chart-container").classed("hidden", false);
                     }, 150); // Add a small delay to ensure renderTimeline has enough time to finish                    
                 }, 150);
-            }
+            },
 
+            async runTest(actionId) {
+                const result = await testAction(actionId,(result)=>{
+                    this.testResults = { ...this.testResults, [actionId]: result };
+                    console.log(this.testResults)
+                });
+            }
         };
     }
 

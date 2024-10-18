@@ -115,14 +115,42 @@ function onlyAlphaNumericKey(evt) {
     return false;
 }
 
+async function testAction(actionId, callback) {
+    $.ajax({
+        url    : `/api/action/${actionId}/run/`,
+        type   : 'POST',
+        headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+        success: function(response) {
+            const { response: resp, message: msg } = response;
+            let action_results = {
+                response:resp,
+                message:msg,
+            }
+            if(resp.expected_value === resp.actual_value || resp.actual_value == 'pass'){
+                action_results.img = "/static/img/pass.png";
+            }else{
+                action_results.img = "/static/img/fail.png";
+            }
+            callback(action_results);
+        },
+        error: function(xhr, status, error) {
+            callback({
+                response:xhr.responseJSON.error,
+                message: "Error calling the test",
+                img: "/static/img/fail.png"
+            }); 
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+
     setupTimezoneSelector();
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         console.log('DARK')
     }     
-
 })

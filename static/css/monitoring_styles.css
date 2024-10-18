@@ -153,6 +153,15 @@ span.frequency{
     padding: 5px 0px 0px 10px;
     border: 1px solid #a9a9a9;
 }
+.board-test-img{
+    display: inline;
+}
+.image-board{
+    height: 130px;
+    overflow: hidden;
+    position: relative;
+    
+}
 
 .bi-arrow-clockwise::before{
     display: inline-block;

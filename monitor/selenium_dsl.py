@@ -148,7 +148,7 @@ class DSLExecutor:
         testResult = TestResult(
             action         = self.action,
             test_type      = self.action.assertion_type,
-            expected_value = 'fail',
+            expected_value = 'pass',
             timestamp      = timezone.now(),
         )
         async with async_playwright() as p:
@@ -171,13 +171,13 @@ class DSLExecutor:
                 img = img.resize((500, 500), Image.LANCZOS)  # Resize to 250x250
                 img.save(screenshot_path, quality=50)  # Save with lower quality                
                 await browser.close()
-                testResult.expected_value = 'pass'
+                testResult.actual_value = 'pass'
                 testResult.body           = filename
                 logger.info(f'Screenshot saved at: {screenshot_path}')
             except Exception as exc:
                 logger.error(f'Screenshot failed: {exc}')
                 logger.error(traceback.format_exc())
-                testResult.expected_value = 'fail'
+                testResult.actual_value = 'fail'
                 testResult.body           = exc
             finally:
                 await browser.close()
