@@ -91,7 +91,7 @@ h3 {
     margin: 0;
 }
 h3.board {
-    font-size: 0.8rem !important;
+    font-size: 0.7rem !important;
     font-weight: 700;
 }
 .row.databox {
@@ -150,7 +150,7 @@ span.frequency{
 .action-graph {
     background-color: #f8f8f8;
     margin-bottom: 10px;
-    padding: 13px 0px 0px 10px;
+    padding: 5px 0px 0px 10px;
     border: 1px solid #a9a9a9;
 }
 

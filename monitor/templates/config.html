@@ -78,6 +78,8 @@
                         <a @click="editAction(action)"><i class="bi bi-pencil-square"></i></a>
                         &nbsp;&nbsp;&nbsp;&nbsp;
                         <a @click="deleteAction(action.id)"><i class="bi bi-trash3-fill"></i></a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <a href="#"><i class="bi bi-play-circle-fill"></i></a>
                     </td>
                 </tr>
             </template>
@@ -183,6 +185,7 @@ const user = parseInt({{request.user.id}});
             async init() {
                 await this.fetchSensors();
             },
+
             async fetchSensors() {
                 try {
                     const response = await fetch('/api/sensors/');
@@ -195,11 +198,13 @@ const user = parseInt({{request.user.id}});
                     console.error('Error fetching sensors:', error);
                 }
             },
+
             showAddSensorForm() {
                 this.sensorFormMode = 'add';
                 this.sensorForm = { name: '', frequency: 0 };
                 this.isSensorFormVisible = true;
             },
+
             editSensor(sensor) {
                 this.errors         = {};
                 this.sensorFormMode = 'edit';
@@ -207,10 +212,12 @@ const user = parseInt({{request.user.id}});
                 this.isSensorFormVisible = true;
                 this.dispachSensor();
             },
+
             cancelSensorForm() {
                 this.errors              = {};
                 this.isSensorFormVisible = false;
             },
+
             async submitSensorForm() {
                 const csrfToken      = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const url            = this.sensorFormMode === 'edit' ? `/api/sensors/${this.sensorForm.id}/` : '/api/sensors/';
@@ -237,6 +244,7 @@ const user = parseInt({{request.user.id}});
                     console.error('Error submitting sensor form:', error);
                 }
             },
+
             selectSensor(sensor) {
                 this.errors              = {};
                 this.isSensorFormVisible = false;
@@ -251,6 +259,7 @@ const user = parseInt({{request.user.id}});
                     } 
                 }));
             },
+
             async deleteSensor(id) {
                 try {
                     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -268,6 +277,7 @@ const user = parseInt({{request.user.id}});
                     console.error('Error deleting sensor:', error);
                 }
             }
+
         };
     }
 
@@ -298,12 +308,14 @@ const user = parseInt({{request.user.id}});
                 { value: 'OPTIONS', label: 'OPTIONS' },
                 { value: 'TRACE', label: 'TRACE' }
             ],
+
             ASSERTION_TYPES: [
                 { value: 'status_code', label: 'Status Code' },
                 { value: 'contains_keyword', label: 'Contains Keyword' },
                 { value: 'selenium', label: 'Selenium Style' },
                 { value: 'screenshot', label: 'Take a screenshot' },
             ],            
+
             updateVisibilityFlags() {
                 // Determine visibility of fields based on assertion type
                 const assertionType     = this.actionForm.assertion_type;
@@ -313,6 +325,7 @@ const user = parseInt({{request.user.id}});
                 this.showSeleniumScript = assertionType === 'selenium';
                 this.showPayload        = ['status_code', 'contains_keyword'].includes(assertionType);
             },
+
             async fetchActions(sensorId) {
                 try {
                     const response = await fetch(`/api/actions/?sensor=${sensorId}`);
@@ -325,9 +338,11 @@ const user = parseInt({{request.user.id}});
                     console.error('Error fetching actions:', error);
                 }
             },
+
             clearActions() {
                 this.actions = [];
             },
+
             init() {
                 // Listen for the custom event and fetch actions based on the selected sensor
                 window.addEventListener('sensor-selected', (event) => {
@@ -341,6 +356,7 @@ const user = parseInt({{request.user.id}});
                     this.isActionFormVisible = false;
                 });
             },
+
             showAddActionForm() {
                 this.errors              = {};
                 this.actionFormMode      = 'add';
@@ -348,6 +364,7 @@ const user = parseInt({{request.user.id}});
                 this.isActionFormVisible = true;
                 this.updateVisibilityFlags();
             },
+
             editAction(action) {
                 this.errors              = {};
                 this.actionFormMode      = 'edit';
@@ -355,9 +372,11 @@ const user = parseInt({{request.user.id}});
                 this.isActionFormVisible = true;
                 this.updateVisibilityFlags();
             },
+
             cancelActionForm() {
                 this.isActionFormVisible = false;
             },
+
             async submitActionForm() {
                 const csrfToken  = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const url        = this.actionFormMode === 'edit' ? `/api/actions/${this.actionForm.id}/` : '/api/actions/';
@@ -383,6 +402,7 @@ const user = parseInt({{request.user.id}});
                     console.error('Error submitting action form:', error);
                 }
             },
+
             async deleteAction(id) {
                 try {
                     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

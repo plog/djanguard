@@ -14,7 +14,6 @@
                         <h5>
                             <img :src="sensor.favico ? sensor.favico : '/static/img/default-favicon.ic'" height="15">
                             <span x-text="sensor.name"></span>&nbsp;
-                            <a href="#"><i class="bi bi-play-circle-fill"></i></a>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -122,9 +121,9 @@
                     return;
                 }
 
-                const margin = {top: 0, right: 25, bottom: 20, left: 0};
+                const margin = {top: 0, right: 25, bottom: 15, left: 0};
                 const width  = (chartElement.node().parentNode.clientWidth - margin.left - margin.right);
-                const height = 25 - margin.top - margin.bottom;
+                const height = 20 - margin.top - margin.bottom;
 
                 const svg = chartElement
                     .append("svg")
@@ -164,7 +163,9 @@
                     .call(d3.axisBottom(x).ticks(5).tickFormat(d => {
                         const timezone = localStorage.getItem('selectedTimezone') || 'UTC';
                         return moment(d).tz(timezone).format("HH:mm"); // Use Moment.js to format in 24-hour time
-                    }));
+                    }))
+                    .selectAll("text")  // Select all the tick text elements
+                    .style("font-size", "0.45rem");  // Set the font size                    ;
 
                 const colorScale = d3.scaleOrdinal()
                     .domain(["200"  , "403"   , "500", "404", "fail"])
