@@ -140,10 +140,7 @@ class ActionRunNowAPI(APIView):
             action = get_object_or_404(Action, pk=action_id)
             response = run_playwright_action(action_id)
             response['url'] = action.sensor.url + action.action_path
-            return Response({
-                'message': f'Action {action_id} executed successfully',
-                'response': response
-            }, status=status.HTTP_200_OK)
+            return Response(response, status=status.HTTP_200_OK)
         except Action.DoesNotExist as exc:
             logger.error(f"ActionRunNowAPI DoesNotExist {exc}")
             return Response({'error': 'Action not found'}, status=status.HTTP_404_NOT_FOUND)

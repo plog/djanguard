@@ -110,27 +110,28 @@ async def async_run_playwright_action(action_id):
             test_type      = action.assertion_type,
             expected_value = action.expected_value,
             timestamp      = timezone.now(),
+            body           = ''
         )        
         try:
             async with aiohttp.ClientSession() as session:
                 headers = json.loads(action.payload).get('headers', {}) if action.payload else {}
-                data    = json.loads(action.payload).get('data', {}) if action.payload else {}
+                data    = json.loads(action.payload).get('data'   , {}) if action.payload else {}
                 async with session.request(method=action.action_type, url=action.sensor.url + action.action_path, headers=headers, json=data) as response:
                     if action.assertion_type =='contains_keyword':
                         response_text = await response.text()
+                        logger.error(f'HEREFSDLFKLSDKFLSDKFLKSDLFKSLDFLKSDL: {response_text}')
                         if test_result.expected_value in response_text:
                             test_result.actual_value = 'pass'
-                            await sync_to_async(test_result.save)()
-                            logger.info(f'      {action.action_name} found:{test_result.expected_value}')
+                            test_result.body = f'{action.action_name} found:{test_result.expected_value}'
+                            logger.info(f'{action.action_name} found:{test_result.expected_value}')
                         else:
                             test_result.actual_value = 'fail'
-                            await sync_to_async(test_result.save)()
-                            logger.error(f'      {action.action_name} Not found:{test_result.expected_value}')
+                            test_result.body = f'{action.action_name} Not found:{test_result.expected_value}'
+                            logger.error(f'{action.action_name} Not found:{test_result.expected_value}')
                     else:
-                        actual_value = str(response.status)
-                        test_result.actual_value = actual_value
-                        await sync_to_async(test_result.save)()
-                        logger.info(f'      {action.action_name} status_code:{actual_value}')
+                        test_result.actual_value = str(response.status)
+                        test_result.body = ''
+                        logger.info(f'      {action.action_name} status_code:{str(response.status)}')
                         
         except Exception as exc:
             test_result.actual_value = '500'
@@ -161,8 +162,6 @@ async def async_run_playwright_action(action_id):
         )          
 
     # Serialize the TestResult to return a dictionary representation
-    if test_result:
-        serializer = TestResultSerializer(test_result)
-        return serializer.data
-    else:
-        return {"message": "No test result created."}
+    serializer = TestResultSerializer(test_result)
+    logger.info(serializer.data)
+    return serializer.data

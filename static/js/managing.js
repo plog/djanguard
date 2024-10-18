@@ -121,12 +121,12 @@ async function testAction(actionId, callback) {
         type   : 'POST',
         headers: {'X-CSRFToken': Cookies.get('csrftoken')},
         success: function(response) {
-            const { response: resp, message: msg } = response;
             let action_results = {
-                response:resp,
-                message:msg,
+                response : JSON.stringify(response),
+                img      : "/static/img/fail.png",
+                message  : response.body
             }
-            if(resp.expected_value === resp.actual_value || resp.actual_value == 'pass'){
+            if(response.expected_value === response.actual_value || response.actual_value == 'pass'){
                 action_results.img = "/static/img/pass.png";
             }else{
                 action_results.img = "/static/img/fail.png";
@@ -135,8 +135,8 @@ async function testAction(actionId, callback) {
         },
         error: function(xhr, status, error) {
             callback({
-                response:xhr.responseJSON.error,
-                message: "Error calling the test",
+                response : xhr.responseJSON.error,
+                message  : "Error calling the test:" + xhr.responseJSON.details,
                 img: "/static/img/fail.png"
             }); 
         }

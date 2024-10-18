@@ -86,7 +86,7 @@
                                 width="45" 
                                 style="margin: 0px 3px 3px 38px;"
                                 alt="Test Result"
-                                x-bind:title="testResults[action.id] ? testResults[action.id].message + ' ' + testResults[action.id].response.actual_value : 'No results available'"
+                                x-bind:title="testResults[action.id] ? testResults[action.id].response : 'No results available'"
                                 >
                         </div>
                     </td>
@@ -237,7 +237,7 @@ const user = parseInt({{request.user.id}});
                 this.sensorFormMode = 'edit';
                 this.sensorForm     = { ...sensor };
                 this.isSensorFormVisible = true;
-                this.dispachSensor();
+                this.dispachSensor(sensor);
             },
 
             cancelSensorForm() {
