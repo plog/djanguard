@@ -6,7 +6,7 @@ import os
 
 BASE_DIR              = Path(__file__).resolve().parent.parent
 ADMIN_URL             = config('ADMIN_URL')
-LOGIN_REDIRECT_URL    = '/board/'
+LOGIN_REDIRECT_URL    = '/config/'
 LOGOUT_REDIRECT_URL   = LOGIN_REDIRECT_URL
 LOGIN_URL             = f'/accounts/login/?next={LOGIN_REDIRECT_URL}'
 GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID')
@@ -23,7 +23,7 @@ AUTHENTICATION_BACKENDS = [
 SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 SECRET_KEY = 'django-insecure-z*ypnwid#cw-(*u7w4b684p$!&f9h83=j1&8v2tidz6-9+7q59'
-DEBUG = True
+DEBUG      = config('DEBUG', default=False, cast=bool)
 
 CELERY_BROKER_URL        = config('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND    = config('CELERY_BROKER_URL')

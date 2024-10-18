@@ -40,7 +40,8 @@ class TermsView(TemplateView):
     
 class CommandsView(TemplateView):
     template_name = 'commands.html'
-    
+
+       
 @method_decorator(csrf_exempt, name='dispatch')
 class GoogleAuthView(View):
     def post(self, request, *args, **kwargs):
@@ -73,4 +74,4 @@ class GoogleAuthView(View):
         # Debugging output to check if the user is properly authenticated before redirecting
         print(f"User logged in: {request.user.is_authenticated}, User ID: {request.user.id}")
 
-        return redirect('web_board')
+        return redirect('web_config')

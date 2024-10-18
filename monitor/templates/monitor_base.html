@@ -49,12 +49,13 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'web_board' %}">Board</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'web_config' %}">Config</a></li>
                     {% if user.is_superuser %}<li class="nav-item"><a class="nav-link" href="/{{ ADMIN_URL }}/"><b>Admin</b></a></li>{% endif %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'profile'%}">{{user}}</a></li>
                 </ul>
                 <form class="d-flex ms-auto" id="logout-form" method="POST" class="logout" action="{% url 'logout' %}">
                     <select class="form-control ml-2 me-2" id="timezone" x-model="selectedTimezone" @change="fetchSensors" style="font-size: 0.7rem; max-width: 150px;"></select>
                     {% if user %}
                     {% csrf_token %}
-                    <a href="#" onclick="document.getElementById('logout-form').submit(); return false;"><i class="bi bi-box-arrow-right text-black"></i></a>
+                        <a href="#" onclick="document.getElementById('logout-form').submit(); return false;"><i class="bi bi-box-arrow-right text-black"></i></a>
                     {% endif %}                    
                 </form>
             </div>

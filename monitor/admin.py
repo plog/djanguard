@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Sensor, Action, TestResult
+from .models import Sensor, Action, TestResult, UserProfile
 
 # Customize Admin site settings
 admin.site.site_header = "Djanguard Administration"
@@ -23,4 +23,10 @@ class ActionAdmin(admin.ModelAdmin):
 class TestResultAdmin(admin.ModelAdmin):
     search_fields = ['action__action_name', 'test_type', 'expected_value', 'actual_value']
     list_display = ['action', 'test_type', 'expected_value', 'actual_value', 'timestamp']
+
+# Custom Admin for UserProfile Model
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    search_fields = ['user']
+    list_display = ['user', 'is_paying_user']
 

@@ -1,6 +1,5 @@
 # views.py
 from rest_framework import serializers, status
-from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -9,16 +8,15 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import FileResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
 from django.utils import timezone
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.generic import TemplateView
-from PIL import Image
+from django.views.generic import TemplateView,FormView
 
 from .tasks import run_playwright_action
 from .models import Action, Sensor, TestResult, UserProfile
 from .serializers import ActionSerializer, SensorSerializer, TestResultSerializer
+from .forms import UserForm, UserProfileForm
 from rest_framework import viewsets
 
 import logging
@@ -44,9 +42,17 @@ class ConfigView(LoginRequiredMixin, TemplateView):
     # Displays the main board page for logged-in users
     template_name = 'config.html'
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
+        if(created):
+            profile.is_paying_user = False
+        return super().get_context_data(**kwargs)
+    
 class SensorDetailView(LoginRequiredMixin, TemplateView):
     # Displays the details of a specific sensor for editing by logged-in users
     template_name = 'sensor_edit.html'
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sensor_id = self.kwargs.get('pk')
@@ -97,6 +103,31 @@ class SensorAddView(LoginRequiredMixin, TemplateView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'profile.html'
+
+    def get(self, request, *args, **kwargs):
+        user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+        user_form = UserForm(instance=request.user)
+        profile_form = UserProfileForm(instance=user_profile)
+        return self.render_to_response(self.get_context_data(user_form=user_form, profile_form=profile_form))
+
+    def post(self, request, *args, **kwargs):
+        user_profile = get_object_or_404(UserProfile, user=request.user)
+        user_form = UserForm(request.POST, instance=request.user)
+
+        if user_form.is_valid():
+            user_form.save()
+            return redirect('web_board')
+
+        profile_form = UserProfileForm(instance=user_profile)
+        return self.render_to_response(self.get_context_data(user_form=user_form, profile_form=profile_form))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile'] = UserProfile.objects.get(user=self.request.user)
+        context.update(kwargs)
+        return context
 
 # API CRUD for Sensor
 # -------------------

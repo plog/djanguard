@@ -3,8 +3,9 @@
 {% load form_tags %}
 {% block content %}
 
-<h1 class="mb-4">Sensors Config</h1>
-<div x-data="sensorData()" x-init="init()" class="box2">
+<h1 class="mb-2">Sensors Config</h1>
+
+<div x-data="sensorData()" x-init="fetchSensors()" class="box2">
     <h2>Sensors &nbsp; <a @click="showAddSensorForm()"><i class="bi bi-plus-square-fill"></i></a></h2>
     <div class="box-content">
         <table id="sensor-table table-striped" class="table">
@@ -59,7 +60,6 @@
             </div>
         </form>
     </div>
-
 </div>
 
 <div x-data="actionData()" x-init="clearActions()" class="box2">
@@ -80,15 +80,15 @@
                         <a @click="deleteAction(action.id)"><i class="bi bi-trash3-fill"></i></a>
                         &nbsp;&nbsp;&nbsp;&nbsp;
                         <a href="#" @click.prevent="runTest(action.id)"><i class="bi bi-play-circle-fill text-success"></i></a>
-                                    <div x-show="testResults[action.id]" class="board-test-img">
-                                        <img 
-                                            x-bind:src="testResults[action.id] ? testResults[action.id].img : '/static/img/pixel.png'" 
-                                            width="45" 
-                                            style="margin: 0px 3px 3px 38px;"
-                                            alt="Test Result"
-                                            x-bind:title="testResults[action.id] ? testResults[action.id].message + ' ' + testResults[action.id].response.actual_value : 'No results available'"
-                                            >
-                                    </div>
+                        <div x-show="testResults[action.id]" class="board-test-img">
+                            <img 
+                                x-bind:src="testResults[action.id] ? testResults[action.id].img : '/static/img/pixel.png'" 
+                                width="45" 
+                                style="margin: 0px 3px 3px 38px;"
+                                alt="Test Result"
+                                x-bind:title="testResults[action.id] ? testResults[action.id].message + ' ' + testResults[action.id].response.actual_value : 'No results available'"
+                                >
+                        </div>
                     </td>
                 </tr>
             </template>
@@ -178,6 +178,18 @@
 
 </div>
 
+<div class="row mb-2 px-3" x-show="showmptyResult">
+    <div class="row px-4">
+        On this page, you can manage your "sensors" and their "actions". 
+        Add, edit, or delete your sensors, and configure actions for each one to monitor different aspects. 
+        This configuration will help you tailor the monitoring process according to your needs.
+        <p class="text-center p-0">
+            <img src="/static/img/18151337.png" width="420">
+        </p>        
+    </div>
+</div>
+
+
 <script>
 const user = parseInt({{request.user.id}});
 </script>
@@ -190,16 +202,22 @@ const user = parseInt({{request.user.id}});
             isSensorFormVisible: false,
             sensorFormMode: 'add',
             errors: {},
+            showmptyResult   : false,
 
-            async init() {
-                await this.fetchSensors();
-            },
+            async init() {},
 
             async fetchSensors() {
                 try {
                     const response = await fetch('/api/sensors/');
                     if (response.ok) {
                         this.sensors = await response.json();
+                        if(this.sensors.length > 0){
+                            const first = this.sensors[0];
+                            console.log(first)
+                            this.selectSensor(first);
+                        }else{
+                            this.showmptyResult=true;
+                        }                        
                     } else {
                         console.error('Failed to fetch sensors');
                     }
@@ -257,16 +275,22 @@ const user = parseInt({{request.user.id}});
             selectSensor(sensor) {
                 this.errors              = {};
                 this.isSensorFormVisible = false;
-                this.dispachSensor();
+                this.dispachSensor(sensor);
             },
-            dispachSensor(){
+
+            dispachSensor(sensor){
                 // Dispatch a custom event when a sensor is selected
                 window.dispatchEvent(new CustomEvent('sensor-selected', { 
                     detail: { 
-                        sensorId: this.sensor.id,
-                        sensorName: this.sensor.name
+                        sensorId  : sensor.id,
+                        sensorName: sensor.name
                     } 
                 }));
+            },
+
+            clearActions(sensor){
+                // Dispatch a custom event when a sensor is selected
+                window.dispatchEvent(new CustomEvent('clear-action'));
             },
 
             async deleteSensor(id) {
@@ -279,6 +303,8 @@ const user = parseInt({{request.user.id}});
                     });
                     if (response.ok) {
                         await this.fetchSensors();
+                        this.clearActions();
+
                     } else {
                         console.error('Failed to delete sensor', response.statusText);
                     }
@@ -365,6 +391,13 @@ const user = parseInt({{request.user.id}});
                     this.selectedSensorName  = event.detail.sensorName;
                     this.isActionFormVisible = false;
                 });
+                window.addEventListener('clear-action', (event) => {
+                    this.clearActions();
+                    this.isActionFormVisible = false;
+                    this.actionForm.sensor   = null;
+                    this.selectedSensorId    = null;
+                    this.selectedSensorName  = null;                
+                });                
             },
 
             showAddActionForm() {
@@ -431,6 +464,7 @@ const user = parseInt({{request.user.id}});
                     console.error('Error deleting action:', error);
                 }
             },
+            
             async runTest(actionId) {
                 const result = await testAction(actionId,(result)=>{
                     this.testResults = { ...this.testResults, [actionId]: result };

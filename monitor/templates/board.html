@@ -4,7 +4,20 @@
 {% block content %}
 <h1 class="mb-4">Sensors Dashboard</h1>
 
+
 <div class="container my-4" x-data="sensorDashboard()">
+    <div x-show="showEmptyResult">
+        <p class="mb-4">
+            This dashboard allows you to monitor and manage all your sensors in real time. 
+            You can view sensor actions, check the latest status, and gain insights into their performance. 
+        </p>
+        <p class="text-center p-0">
+            <img src="/static/img/14181654.png" width="320">
+        </p>
+        <p class="mb-4">
+            For more detailed configuration or to add new sensors and actions, head to the <a href="{% url 'web_config' %}">Config</a>
+        </p>
+    </div>
     <div class="row" id="sensor-container">
         <!-- Sensors will be loaded here dynamically with Alpine.js -->
         <template x-for="sensor in sensors" :key="sensor.id">
@@ -12,7 +25,7 @@
                 <div class="card box">
                     <div class="card-header pt-3">
                         <h5>
-                            <img :src="sensor.favico ? sensor.favico : '/static/img/default-favicon.ic'" height="15">
+                            <img :src="sensor.favico ? sensor.favico : '/static/img/default-favicon.ico'" height="15">
                             <span x-text="sensor.name"></span>&nbsp;                            
                         </h5>
                     </div>
@@ -57,18 +70,15 @@
 <script>
     function sensorDashboard() {
         return {
-            sensors: [],
-            actions: {},
-            selectedTimezone: localStorage.getItem('selectedTimezone') || 'UTC',
-            testResults: {},
+            sensors          : [],
+            actions          : {},
+            selectedTimezone : localStorage.getItem('selectedTimezone') || 'UTC',
+            testResults      : {},
+            showEmptyResult   : false,
 
             init() {
                 this.fetchSensors();
-                window.addEventListener('resize', () => {this.resizeAllCharts();});
-                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl);
-                });                
+                window.addEventListener('resize', () => {this.resizeAllCharts();});            
             },            
 
             fetchSensors() {
@@ -79,6 +89,13 @@
                         this.sensors.forEach(sensor => {
                             this.fetchActions(sensor.id);
                         });
+                        if(data.length > 0){
+                            this.showEmptyResult=false;
+                            console.log("DATA",this.showEmptyResult,data)
+                        }else{
+                            this.showEmptyResult=true;
+                            console.log("NO DATA",this.showEmptyResult,data)
+                        }
                     })
                     .catch(error => {
                         console.error('Error fetching sensors:', error);
@@ -251,7 +268,6 @@
             }
         };
     }
-
 
     document.addEventListener('alpine:init', () => {
         Alpine.data('sensorDashboard', sensorDashboard);

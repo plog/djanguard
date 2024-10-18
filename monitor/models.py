@@ -65,9 +65,8 @@ class TestResult(models.Model):
     def __str__(self):
         return f"{self.test_type} test for action '{self.action.action_name}' at {self.timestamp}"
 
-
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user           = models.OneToOneField(User, on_delete=models.CASCADE)
     is_paying_user = models.BooleanField(default=False)
 
     def __str__(self):
