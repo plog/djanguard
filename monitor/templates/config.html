@@ -90,14 +90,19 @@
                         <a @click="deleteAction(action.id)"><i class="bi bi-trash3-fill"></i></a>
                         &nbsp;&nbsp;&nbsp;&nbsp;
                         <a href="#" @click.prevent="runTest(action.id)"><i class="bi bi-play-circle-fill text-success"></i></a>
-                        <div x-show="testResults[action.id]" class="board-test-img">
-                            <img 
+                        <div class="board-test-img">
+                            <img x-show="testResults[action.id]"
                                 x-bind:src="testResults[action.id] ? testResults[action.id].img : '/static/img/pixel.png'" 
                                 width="45" 
-                                style="margin: 0px 3px 3px 38px;"
-                                alt="Test Result"
+                                style="margin: 0px 3px 3px 0px;"
                                 x-bind:title="testResults[action.id] ? testResults[action.id].response : 'No results available'"
                                 >
+                            <img x-show="!testResults[action.id]"
+                                x-bind:src="!testResults[action.id] ? action.img: '/static/img/pixel.png'" 
+                                width="45" 
+                                style="margin: 0px 3px 3px 0px;"
+                                x-bind:title="action.latest_test_result ? 'Expected: ' + action.latest_test_result.expected_value + ', Actual: ' + action.latest_test_result.actual_value : 'No test result available'"
+                                >                                 
                         </div>
                     </td>
                 </tr>
@@ -180,7 +185,6 @@
 
             <div class="d-flex justify-content-between mt-3">
                 <button type="submit" class="btn btn-sm btn-success" x-text="actionFormMode === 'edit' ? 'Update' : 'Add'"></button>
-                <button type="button" class="btn btn-sm btn-warning" @click="cancelActionForm()">Test</button>
                 <button type="button" class="btn btn-sm btn-secondary" @click="cancelActionForm()">Cancel</button>
             </div>
         </form>
@@ -385,6 +389,22 @@ const user = parseInt({{request.user.id}});
                     const response = await fetch(`/api/actions/?sensor=${sensorId}`);
                     if (response.ok) {
                         this.actions = await response.json();
+                        this.actions.map(action => {
+                            if (action.latest_test_result) {
+                                if (
+                                    action.latest_test_result.expected_value === action.latest_test_result.actual_value ||
+                                    action.latest_test_result.actual_value === 'pass'
+                                ) {
+                                    action.img = "/static/img/pass.png";
+                                } else {
+                                    action.img = "/static/img/fail.png";
+                                }
+                            } else {
+                                // Default image when there's no test result available
+                                action.img = "/static/img/no-result.png";
+                            }
+                            return action;
+                        });                        
                     } else {
                         console.error('Failed to fetch actions');
                     }
@@ -486,7 +506,6 @@ const user = parseInt({{request.user.id}});
             async runTest(actionId) {
                 const result = await testAction(actionId,(result)=>{
                     this.testResults = { ...this.testResults, [actionId]: result };
-                    console.log(this.testResults)
                 });
             }            
         };

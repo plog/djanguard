@@ -18,11 +18,19 @@ class SensorSerializer(serializers.ModelSerializer):
         return ''        
     
 class ActionSerializer(serializers.ModelSerializer):
+    latest_test_result = serializers.SerializerMethodField()
+    
     class Meta:
         model = Action
         fields = '__all__'
 
-
+    def get_latest_test_result(self, obj):
+        # Get the latest test result for the action using timestamp
+        latest_test = obj.tests.order_by('-timestamp').first()
+        if latest_test:
+            return TestResultSerializer(latest_test).data
+        return None
+    
 class TestResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestResult
