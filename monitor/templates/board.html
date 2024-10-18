@@ -1,407 +1,232 @@
 {% extends "monitor_base.html" %}
 {% load static %}
-{% load form_tags %}
+
 {% block content %}
-
-<div x-data="sensorData()" x-init="init()" class="box2">
-    <h2>Sensors &nbsp; <a @click="showAddSensorForm()"><i class="bi bi-plus-square-fill"></i></a></h2>
-    <div class="box-content">
-        <table id="sensor-table table-striped" class="table">
-            <template x-for="(sensor, index) in sensors" :key="sensor.id" :key="sensor.id">
-                <tr :class="index % 2 === 0 ? 'table-row-light' : 'table-row-dark'">
-                    <td nowrap><span x-text="sensor.name"></span></td>
-                    <td nowrap><span x-text="sensor.frequency"></span> s.</td>
-                    <td nowrap>
-                        <a @click="editSensor(sensor)"><i class="bi bi-pencil-square"></i></a>
-                        &nbsp;&nbsp;
-                        <a @click="deleteSensor(sensor.id)"><i class="bi bi-trash3-fill"></i></a>
-                        &nbsp;&nbsp;
-                        <a @click="selectSensor(sensor)"><i class="bi bi-eye"></i></a> <!-- Load actions when sensor is clicked -->
-                    </td>
-                </tr>
-            </template>
-        </table>
+<div class="container my-4" x-data="sensorDashboard()">
+    <select class="form-control" id="timezone" x-model="selectedTimezone" @change="fetchSensors"></select>
+    <h1 class="mb-4">Sensor Dashboard</h1>
+    <div class="row" id="sensor-container">
+        <!-- Sensors will be loaded here dynamically with Alpine.js -->
+        <template x-for="sensor in sensors" :key="sensor.id">
+            <div class="col-12 col-sm-6 col-lg-4 mb-3">
+                <div class="card box">
+                    <div class="card-header pt-3">
+                        <h5 class="card-title">
+                            <img :src="sensor.favico" height="15" x-show="sensor.favico">
+                            <span x-text="sensor.name"></span>&nbsp;
+                            <a :href="'/sensor/' + sensor.id"><i class="bi bi-pencil-square"></i></a>
+                            <a href="#" @click.prevent="deleteSensor(sensor.id)" class="sensor-delete-btn text-danger mx-2"><i class="bi bi-trash3-fill"></i></a>
+                            <a href="#"><i class="bi bi-play-circle-fill"></i></a>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <a :href="sensor.url" class="sensor_url" x-text="sensor.short_url"></a>
+                            <span class="frequency" x-text="'(' + sensor.frequency + ' s.)'"></span>
+                        </p>
+                        <div :id="'actions-' + sensor.id"></div>
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
-
-    <!-- Sensor Add/Edit Form -->
-    <div x-show="isSensorFormVisible" class="box-content">
-        <form @submit.prevent="submitSensorForm()">
-            <div class="row">
-                <div class="col">
-                    <label class="form-label">Name:</label>
-                    <input type="text" class="form-control" x-model="sensorForm.name" required>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.name" x-text="errors.name ? errors.name[0] : ''"></div>
-                </div>
-                <div class="col">
-                    <label class="form-label">Frequency (seconds):</label>
-                    <input type="number" class="form-control" x-model="sensorForm.frequency" required>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.frequency" x-text="errors.frequency ? errors.frequency[0] : ''"></div>
-
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <label class="form-label">Base URL</label>
-                    <input type="text" class="form-control" x-model="sensorForm.url" required>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.url" x-text="errors.url ? errors.url[0] : ''"></div>
-
-                </div>
-            </div>                    
-            
-            <div class="d-flex justify-content-between mt-3">
-                <button type="submit" class="btn btn-sm btn-success" x-text="sensorFormMode === 'edit' ? 'Update' : 'Add'"></button>
-                <button type="button" class="btn btn-sm btn-secondary" @click="cancelSensorForm()">Cancel</button>
-            </div>
-        </form>
-    </div>
-
-</div>
-
-<div x-data="actionData()" x-init="clearActions()" class="box2">
-    <h2>
-        <span x-text="`${selectedSensorName?selectedSensorName:'Actions'}`"></span>
-        <span x-show="selectedSensorId">
-            &nbsp; <a @click="showAddActionForm()"><i class="bi bi-plus-square-fill"></i></a>
-        </span>
-    </h2>
-    <div class="box-content">
-        <table id="action-table" class="table table-striped">
-            <template x-for="(action, index) in actions" :key="action.id">
-                <tr :class="index % 2 === 0 ? 'table-row-light' : 'table-row-dark'">
-                    <td nowrap><span x-text="action.action_name"></span></td>
-                    <td nowrap>
-                        <a @click="editAction(action)"><i class="bi bi-pencil-square"></i></a>
-                        &nbsp;&nbsp;&nbsp;&nbsp;
-                        <a @click="deleteAction(action.id)"><i class="bi bi-trash3-fill"></i></a>
-                    </td>
-                </tr>
-            </template>
-        </table>        
-    </div>
-
-    <!-- Action Add/Edit Form -->
-    <div x-show="isActionFormVisible" class="box-content">
-        <form @submit.prevent="submitActionForm()">
-            <div class="row">
-                <div class="col">
-                    <label for="action-name" class="form-label">Action Name:</label>
-                    <input type="text" class="form-control" id="action-name" x-model="actionForm.action_name" required>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.action_name" x-text="errors.action_name ? errors.action_name[0] : ''"></div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <label for="action-path" class="form-label">Action Path:</label>
-                    <input type="text" class="form-control" id="action-path" x-model="actionForm.action_path" required>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.action_path" x-text="errors.action_path ? errors.action_path[0] : ''"></div>
-                </div>
-            </div>    
-
-            <div class="row">
-                <div class="col">
-                    <label for="assertion-type" class="form-label">Assertion Type:</label>
-                    <select class="form-select" id="assertion-type" x-model="actionForm.assertion_type" @change="updateVisibilityFlags()" required>
-                        <template x-for="assertion in ASSERTION_TYPES" :key="assertion.value">
-                            <option :value="assertion.value" x-text="assertion.label"></option>
-                        </template>
-                    </select>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.assertion_type" x-text="errors.assertion_type ? errors.assertion_type[0] : ''"></div>
-                </div>
-            </div>
-            <!-- ---------- conditional diaplay ----------- -->
-            <div class="row" x-show="showExpectedValue">
-                <div class="col">
-                    <label for="expected-value" class="form-label">Expected value:</label>
-                    <input type="text" class="form-control" id="expected-value" x-model="actionForm.expected_value" required>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.expected_value" x-text="errors.expected_value ? errors.expected_value[0] : ''"></div>
-                </div>
-            </div>  
-
-            <div class="row" x-show="showActionType">
-                <div class="col">
-                    <label for="action-type" class="form-label">Action Type:</label>
-                    <select class="form-select" id="action-type" x-model="actionForm.action_type" required>
-                        <template x-for="verb in HTTP_VERBS" :key="verb.value">
-                            <option :value="verb.value" x-text="verb.label"></option>
-                        </template>
-                    </select>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.action_type" x-text="errors.action_type ? errors.action_type[0] : ''"></div>
-                </div>
-            </div>
-
-            <div class="row" x-show="showSeleniumScript">
-                <div class="col">
-                    <label for="selenium-script" class="form-label">Selenium Script:</label>
-                    <textarea class="form-control" id="selenium-script" x-model="actionForm.selenium_script" rows="3"></textarea>
-                    <div class="text-danger" x-show="errors.selenium_script" x-text="errors.selenium_script ? errors.selenium_script[0] : ''"></div>
-                </div>
-            </div>
-
-            <div class="row" x-show="showPayload">
-                <div class="col">
-                    <label for="payload" class="form-label">Payload (JSON):</label>
-                    <textarea class="form-control" id="payload" x-model="actionForm.payload" rows="3"></textarea>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.payload" x-text="errors.payload ? errors.payload[0] : ''"></div>
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-between mt-3">
-                <button type="submit" class="btn btn-sm btn-success" x-text="actionFormMode === 'edit' ? 'Update' : 'Add'"></button>
-                <button type="button" class="btn btn-sm btn-warning" @click="cancelActionForm()">Test</button>
-                <button type="button" class="btn btn-sm btn-secondary" @click="cancelActionForm()">Cancel</button>
-            </div>
-        </form>
-    </div>
-
 </div>
 
 <script>
-const user = parseInt({{request.user.id}});
-</script>
-    
-<script>
-    function sensorData() {
+    function sensorDashboard() {
         return {
             sensors: [],
-            sensorForm: { name: '',url: '', frequency: 0, user:user },
-            isSensorFormVisible: false,
-            sensorFormMode: 'add',
-            errors: {},
-
-            async init() {
-                await this.fetchSensors();
-            },
-            async fetchSensors() {
-                try {
-                    const response = await fetch('/api/sensors/');
-                    if (response.ok) {
-                        this.sensors = await response.json();
-                    } else {
-                        console.error('Failed to fetch sensors');
-                    }
-                } catch (error) {
-                    console.error('Error fetching sensors:', error);
-                }
-            },
-            showAddSensorForm() {
-                this.sensorFormMode = 'add';
-                this.sensorForm = { name: '', frequency: 0 };
-                this.isSensorFormVisible = true;
-            },
-            editSensor(sensor) {
-                this.errors         = {};
-                this.sensorFormMode = 'edit';
-                this.sensorForm     = { ...sensor };
-                this.isSensorFormVisible = true;
-                this.dispachSensor();
-            },
-            cancelSensorForm() {
-                this.errors              = {};
-                this.isSensorFormVisible = false;
-            },
-            async submitSensorForm() {
-                const csrfToken      = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                const url            = this.sensorFormMode === 'edit' ? `/api/sensors/${this.sensorForm.id}/` : '/api/sensors/';
-                const method         = this.sensorFormMode === 'edit' ? 'PUT' : 'POST';
-                this.sensorForm.user = user;
-                try {
-                    console.log(this.sensorForm)
-                    const response = await fetch(url, {
-                        method: method,
-                        headers: {'Content-Type': 'application/json','X-CSRFToken': csrfToken},
-                        body: JSON.stringify(this.sensorForm)
-                    });
-                    if (response.ok) {
-                        this.isSensorFormVisible = false;
-                        await this.fetchSensors();
-                    } else if (response.status === 400) {
-                        // Handle validation errors
-                        const errorData = await response.json();
-                        this.errors = errorData; // Capture validation errors                        
-                    } else {
-                        console.error('Failed to submit sensor form');
-                    }
-                } catch (error) {
-                    console.error('Error submitting sensor form:', error);
-                }
-            },
-            selectSensor(sensor) {
-                this.errors              = {};
-                this.isSensorFormVisible = false;
-                this.dispachSensor();
-            },
-            dispachSensor(){
-                // Dispatch a custom event when a sensor is selected
-                window.dispatchEvent(new CustomEvent('sensor-selected', { 
-                    detail: { 
-                        sensorId: this.sensor.id,
-                        sensorName: this.sensor.name
-                    } 
-                }));
-            },
-            async deleteSensor(id) {
-                try {
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                    const response = await fetch(`/api/sensors/${id}/`, {
-                        method: 'DELETE',
-                        headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
-                        credentials: 'same-origin'
-                    });
-                    if (response.ok) {
-                        await this.fetchSensors();
-                    } else {
-                        console.error('Failed to delete sensor', response.statusText);
-                    }
-                } catch (error) {
-                    console.error('Error deleting sensor:', error);
-                }
-            }
-        };
-    }
-
-    function actionData() {
-        return {
-            actions: [],
-            actionForm: { sensor: this.selectedSensorId },
-            isActionFormVisible: false,
-            actionFormMode: 'add',
-            errors: {},
-            selectedSensorName: '',  // From sensorData(): To store the selected sensor's name
-            selectedSensorId: null,  // From sensorData(): To store the selected sensor's ID 
-
-            // Visibility flags for the form fields
-            showExpectedValue : false,
-            showActionType    : false,
-            showSeleniumScript: false,
-            showPayload       : false,            
-
-            // Initialize HTTP_VERBS and ASSERTION_TYPES as data properties
-            HTTP_VERBS: [
-                { value: 'GET', label: 'GET' },
-                { value: 'POST', label: 'POST' },
-                { value: 'PUT', label: 'PUT' },
-                { value: 'DELETE', label: 'DELETE' },
-                { value: 'PATCH', label: 'PATCH' },
-                { value: 'HEAD', label: 'HEAD' },
-                { value: 'OPTIONS', label: 'OPTIONS' },
-                { value: 'TRACE', label: 'TRACE' }
-            ],
-            ASSERTION_TYPES: [
-                { value: 'status_code', label: 'Status Code' },
-                { value: 'contains_keyword', label: 'Contains Keyword' },
-                { value: 'selenium', label: 'Selenium Style' },
-                { value: 'screenshot', label: 'Take a screenshot' },
-            ],            
-            updateVisibilityFlags() {
-                // Determine visibility of fields based on assertion type
-                const assertionType     = this.actionForm.assertion_type;
-                console.log(assertionType);
-                this.showExpectedValue  = ['status_code', 'contains_keyword'].includes(assertionType);
-                this.showActionType     = ['status_code', 'contains_keyword'].includes(assertionType);
-                this.showSeleniumScript = assertionType === 'selenium';
-                this.showPayload        = ['status_code', 'contains_keyword'].includes(assertionType);
-            },
-            async fetchActions(sensorId) {
-                try {
-                    const response = await fetch(`/api/actions/?sensor=${sensorId}`);
-                    if (response.ok) {
-                        this.actions = await response.json();
-                    } else {
-                        console.error('Failed to fetch actions');
-                    }
-                } catch (error) {
-                    console.error('Error fetching actions:', error);
-                }
-            },
-            clearActions() {
-                this.actions = [];
-            },
+            selectedTimezone: localStorage.getItem('selectedTimezone') || 'UTC',
+            
             init() {
-                // Listen for the custom event and fetch actions based on the selected sensor
-                window.addEventListener('sensor-selected', (event) => {
-                    console.log('sensor-selected',event.detail.sensorId)
-                    this.clearActions();
-                    this.fetchActions(event.detail.sensorId);
-                    this.updateVisibilityFlags();
-                    this.actionForm.sensor   = event.detail.sensorId;
-                    this.selectedSensorId    = event.detail.sensorId;
-                    this.selectedSensorName  = event.detail.sensorName;
-                    this.isActionFormVisible = false;
-                });
-            },
-            showAddActionForm() {
-                this.errors              = {};
-                this.actionFormMode      = 'add';
-                this.actionForm          = { sensor: this.selectedSensorId };
-                this.isActionFormVisible = true;
-                this.updateVisibilityFlags();
-            },
-            editAction(action) {
-                this.errors              = {};
-                this.actionFormMode      = 'edit';
-                this.actionForm          = { ...action };
-                this.isActionFormVisible = true;
-                this.updateVisibilityFlags();
-            },
-            cancelActionForm() {
-                this.isActionFormVisible = false;
-            },
-            async submitActionForm() {
-                const csrfToken  = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                const url        = this.actionFormMode === 'edit' ? `/api/actions/${this.actionForm.id}/` : '/api/actions/';
-                const method     = this.actionFormMode === 'edit' ? 'PUT' : 'POST';
-                try {
-                    console.log('ACTION',this.actionForm)
-                    const response = await fetch(url, {
-                        method: method,
-                        headers: {'Content-Type': 'application/json','X-CSRFToken': csrfToken},
-                        body: JSON.stringify(this.actionForm)
+                this.fetchSensors();
+                window.addEventListener('resize', () => {this.resizeAllCharts();});
+            },            
+            fetchSensors() {
+                fetch('/api/sensors/')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.sensors = data;
+                        this.sensors.forEach(sensor => {
+                            this.fetchActions(sensor.id);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching sensors:', error);
                     });
-                    if (response.ok) {
-                        this.isActionFormVisible = false;
-                        await this.fetchActions(this.selectedSensorId); // Ensure actions are refreshed
-                    } else if (response.status === 400) {
-                        // Handle validation errors
-                        const errorData = await response.json();
-                        this.errors = errorData; // Capture validation errors                          
-                    } else {
-                        console.error('Failed to submit action form');
-                    }
-                } catch (error) {
-                    console.error('Error submitting action form:', error);
+            },
+
+            fetchActions(sensorId) {
+                fetch(`/api/actions/?sensor=${sensorId}`)
+                    .then(response => response.json())
+                    .then(actions => {
+                        actions.forEach(action => {
+                            let img = action.assertion_type === 'screenshot' 
+                                ? `<img class="img-fluid" src="/api/action/${action.id}/screenshot/">` 
+                                : '';
+
+                            document.querySelector(`#actions-${sensorId}`).innerHTML += `
+                                <div class="action-graph">
+                                    <h3 class="board">${action.action_name} (${action.action_type})</h3>
+                                    <div id="chart-action-${action.id}" class="chart-container" style="height: 30px; width: 90%;"></div>
+                                    ${img}
+                                </div>
+                            `;
+                            this.fetchTestResults(action.id);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching actions:', error);
+                    });
+            },
+
+            fetchTestResults(actionId) {
+                if (!window.testResultsCache) {
+                    window.testResultsCache = {};
+                }
+
+                if (window.testResultsCache[actionId]) {
+                    this.renderTimeline(actionId, window.testResultsCache[actionId]);
+                } else {
+                    fetch(`/api/test-results/?action=${actionId}`)
+                        .then(response => response.json())
+                        .then(result => {
+                            window.testResultsCache[actionId] = result;
+                            console.log("RES",result)
+                            this.renderTimeline(actionId, result);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching test results:', error);
+                        });
                 }
             },
-            async deleteAction(id) {
-                try {
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                    const response = await fetch(`/api/actions/${id}/`, {
-                        method: 'DELETE',
-                        headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
-                        credentials: 'same-origin'
-                    });
-                    if (response.ok) {
-                        this.clearActions();
-                        this.fetchActions(this.selectedSensorId)
-                    } else {
-                        console.error('Failed to delete action', response.statusText);
-                    }
-                } catch (error) {
-                    console.error('Error deleting action:', error);
+
+            deleteSensor(sensorId) {
+                if (confirm('Delete this sensor? THIS ACTION CANNOT BE UNDONE.')) {
+                    fetch(`/api/sensors/${sensorId}/`, { method: 'DELETE' })
+                        .then(() => {
+                            this.sensors = this.sensors.filter(sensor => sensor.id !== sensorId);
+                        })
+                        .catch(error => {
+                            console.error('Error deleting sensor:', error);
+                        });
                 }
+            },
+
+            renderTimeline(actionId, testResults) {
+                const chartElement         = d3.select(`#chart-action-${actionId}`);
+                chartElement.style.display = 'none';
+                chartElement.innerHTML     = ""; // Clear previous chart
+
+                if (testResults.length === 0) {
+                    chartElement.innerHTML     = "No data";
+                    chartElement.style.display = 'block';
+                    return;
+                }
+
+                const margin = {top: 0, right: 25, bottom: 20, left: 0};
+                const width  = (chartElement.node().parentNode.clientWidth - margin.left - margin.right);
+                const height = 25 - margin.top - margin.bottom;
+
+                const svg = chartElement
+                    .append("svg")
+                    .attr("width"   , (width + margin.left + margin.right))
+                    .attr("height"  , height + margin.top + margin.bottom)
+                    .attr("viewBox" , `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+                    .attr("preserveAspectRatio", "xMinYMin meet")
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                const parseTime = d3.isoParse;
+
+                const data = testResults.map(result => ({
+                    id         : parseInt(result.id),
+                    action_id  : parseInt(result.action),
+                    timestamp  : formatDate(result.timestamp),
+                    value      : result.actual_value,
+                    body       : result.body
+                }));
+
+                // Create a tooltip div (hidden by default)
+                const tooltip = d3.select("body").append("div")
+                    .attr("class", "tooltip")
+                    .style("position", "absolute")
+                    .style("padding", "5px")
+                    .style("background", "rgba(0, 0, 0, 0.7)")
+                    .style("color", "#fff")
+                    .style("border-radius", "3px")
+                    .style("pointer-events", "none")
+                    .style("opacity", 0); // Hidden initially
+
+                const x = d3.scaleTime()
+                    .domain(d3.extent(data, d => d.timestamp))
+                    .range([0, width]);
+                    svg.append("g")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(x).ticks(5).tickFormat(d => {
+                        const timezone = localStorage.getItem('selectedTimezone') || 'UTC';
+                        return moment(d).tz(timezone).format("HH:mm"); // Use Moment.js to format in 24-hour time
+                    }));
+
+                const colorScale = d3.scaleOrdinal()
+                    .domain(["200"  , "403"   , "500", "404", "fail"])
+                    .range(["green" , "orange", "red", "red", "red"]);
+
+                svg.selectAll("rect")
+                    .data(data)
+                    .enter()
+                    .append("rect")
+                    .attr("x", d => x(d.timestamp))
+                    .attr("y", 0)
+                    .attr("width", 3) // Fixed width for better visibility of events
+                    .attr("height", height)
+                    .attr("fill", d => colorScale(d.value))
+                    .on("mouseover", function (event, d) {
+                        const content = d.body ? d.body : d.value;
+                        tooltip.transition().duration(200).style("opacity", 0.8);
+                        tooltip.html(`${content}`)
+                            .style("left", (event.pageX + 5) + "px")
+                            .style("top", (event.pageY - 28) + "px");
+                    })
+                    .on("mousemove", function (event) {
+                        tooltip.style("left", (event.pageX + 5) + "px")
+                            .style("top", (event.pageY - 28) + "px");
+                    })
+                    .on("mouseout", function () {
+                        tooltip.transition().duration(500).style("opacity", 0);
+                    });
+
+                    chartElement.style.display = 'block';
+            },
+
+            resizeAllCharts() {
+                d3.selectAll(".chart-container").classed("hidden", true);
+                const self = this; // Store reference to the Alpine component instance
+                clearTimeout(window.resizeTimeout);
+                window.resizeTimeout = setTimeout(() => {
+                    d3.selectAll(".chart-container").each((_, i, nodes) => {
+                        const actionId = nodes[i].id.split("-action-")[1];
+                        if (window.testResultsCache && window.testResultsCache[actionId]) {
+                            // Clear the previous chart properly
+                            d3.select(`#chart-action-${actionId}`).selectAll("*").remove();
+
+                            // Redraw the chart using the latest cached data
+                            self.renderTimeline(actionId, window.testResultsCache[actionId]);
+                        }
+                    });
+                    // Remove the 'hidden' class to trigger the fade-in effect after re-rendering
+                    setTimeout(() => {
+                        d3.selectAll(".chart-container").classed("hidden", false);
+                    }, 150); // Add a small delay to ensure renderTimeline has enough time to finish                    
+                }, 150);
             }
+
         };
     }
-</script>
 
+
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('sensorDashboard', sensorDashboard);
+    });
+</script>
 {% endblock %}

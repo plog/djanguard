@@ -2,19 +2,20 @@ argparse
 asgiref
 bs4
 celery
-pycryptodome
+coreapi
 Django
 django-admin
 django-celery-beat
-django-cryptography-django5
 django-celery-results
 django-contact-form
 django-cors-headers
+django-cryptography-django5
 django-import-export
 django-ratelimit
 django-rosetta
 djangorestframework
 geoip2
+google-api-python-client
 gunicorn
 openpyxl
 pandas
@@ -22,6 +23,7 @@ pillow
 psutil
 psycopg2-binary
 pyarrow
+pycryptodome
 python-decouple
 python-dotenv
 python-slugify
@@ -32,4 +34,3 @@ setuptools
 sqlparse
 watchdog
 whitenoise
-google-api-python-client

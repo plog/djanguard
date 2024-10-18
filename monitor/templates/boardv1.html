@@ -192,24 +192,24 @@
     }
 
     function resizeAllCharts() {
-    // Add the 'hidden' class to trigger the fade-out effect
-    d3.selectAll(".chart-container").classed("hidden", true);
+        // Add the 'hidden' class to trigger the fade-out effect
+        d3.selectAll(".chart-container").classed("hidden", true);
 
-    clearTimeout(window.resizeTimeout);
-    window.resizeTimeout = setTimeout(() => {
-        d3.selectAll(".chart-container").each(function() {
-            const actionId = this.id.split("-action-")[1];
-            if (window.testResultsCache && window.testResultsCache[actionId]) {
-                renderTimeline(actionId, window.testResultsCache[actionId]);
-            }
-        });
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(() => {
+            d3.selectAll(".chart-container").each(function() {
+                const actionId = this.id.split("-action-")[1];
+                if (window.testResultsCache && window.testResultsCache[actionId]) {
+                    renderTimeline(actionId, window.testResultsCache[actionId]);
+                }
+            });
 
-        // Remove the 'hidden' class to trigger the fade-in effect after re-rendering
-        setTimeout(() => {
-            d3.selectAll(".chart-container").classed("hidden", false);
-        }, 150); // Add a small delay to ensure renderTimeline has enough time to finish
-    }, 150);
-}
+            // Remove the 'hidden' class to trigger the fade-in effect after re-rendering
+            setTimeout(() => {
+                d3.selectAll(".chart-container").classed("hidden", false);
+            }, 150); // Add a small delay to ensure renderTimeline has enough time to finish
+        }, 150);
+    }
 
 
 </script>

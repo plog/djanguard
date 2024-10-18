@@ -1,5 +1,5 @@
 # views.py
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -26,7 +26,7 @@ import os
 import re
 import fnmatch
 
-logger = logging.getLogger('django')
+logger        = logging.getLogger('django')
 MIN_FREQUENCY = 30
 MAX_SENSORS   = 10
 MAX_ACTIONS   = 3
@@ -40,6 +40,10 @@ class BoardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         return context
 
+class ConfigView(LoginRequiredMixin, TemplateView):
+    # Displays the main board page for logged-in users
+    template_name = 'config.html'
+    
 class SensorDetailView(LoginRequiredMixin, TemplateView):
     # Displays the details of a specific sensor for editing by logged-in users
     template_name = 'sensor_edit.html'
@@ -96,175 +100,6 @@ class SensorAddView(LoginRequiredMixin, TemplateView):
 
 # API CRUD for Sensor
 # -------------------
-# Sensors
-@method_decorator(ensure_csrf_cookie, name='dispatch')
-class SensorListCreateAPI(ListCreateAPIView):
-    # Handles listing and creating sensors for authenticated users
-    permission_classes = [IsAuthenticated]
-    serializer_class = SensorSerializer
-
-    def get_queryset(self):
-        search_term = self.request.headers.get('search', None)
-        queryset = Sensor.objects.filter(user=self.request.user).order_by('id')
-        if search_term:
-            queryset = queryset.filter(name__icontains=search_term)
-        return queryset
-
-@method_decorator(ensure_csrf_cookie, name='dispatch')
-class SensorDetailAPI(APIView):
-    # Handles retrieving, updating, and deleting a specific sensor for authenticated users
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        sensor = get_object_or_404(Sensor, pk=pk)
-        if sensor.user != self.request.user:
-                raise PermissionDenied("You do not have permission to access this sensor.")
-        return sensor
-
-    def get(self, request, pk):
-        sensor = self.get_object(pk)
-        serializer = SensorSerializer(sensor)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        sensor = self.get_object(pk)
-        try:
-            user_profile = request.user.userprofile
-        except UserProfile.DoesNotExist:
-            user_profile = UserProfile.objects.create(user=request.user)
-        
-        # Check if the user is a paying user
-        user_profile = request.user.userprofile
-        frequency    = int(request.data.get('frequency', sensor.frequency))
-        if not user_profile.is_paying_user and frequency < MIN_FREQUENCY:
-            request.data['frequency'] = MIN_FREQUENCY  # Force frequency to MIN_FREQUENCY seconds if not a paying user
-        serializer = SensorSerializer(sensor, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        sensor = self.get_object(pk)
-        sensor.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-# Actions
-@method_decorator(ensure_csrf_cookie, name='dispatch')
-class ActionListCreateAPI(ListCreateAPIView):
-    # Handles listing and creating actions for authenticated users
-    permission_classes = [IsAuthenticated]
-    serializer_class = ActionSerializer
-
-    def get_queryset(self):
-        sensor_id = self.request.query_params.get('sensor', None)
-        queryset = Action.objects.filter(sensor__user=self.request.user).order_by('id')
-        if sensor_id:
-            queryset = queryset.filter(sensor_id=sensor_id)
-        return queryset
-
-    def create(self, request, *args, **kwargs):
-        try:
-            user_profile = request.user.userprofile
-            if not user_profile.is_paying_user:
-                sensor_id = request.data.get('sensor')
-                if sensor_id:
-                    action_count = Action.objects.filter(sensor_id=sensor_id, sensor__user=request.user).count()
-                    if action_count >= MAX_ACTIONS:
-                        return Response({'error': f'Free version can only create up to {MAX_ACTIONS} actions per sensor.'}, status=status.HTTP_400_BAD_REQUEST)
-                                
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({
-                'error': 'An unexpected error occurred', 
-                'details': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-@method_decorator(ensure_csrf_cookie, name='dispatch')
-class ActionDetailAPI(APIView):
-    # Handles retrieving, updating, and deleting a specific action for authenticated users
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        return get_object_or_404(Action, pk=pk)
-
-    def get(self, request, pk):
-        action = self.get_object(pk)
-        serializer = ActionSerializer(action)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        action = self.get_object(pk)
-        serializer = ActionSerializer(action, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        action = self.get_object(pk)
-        action.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-# TestResult
-class TestResultListAPI(APIView):
-    # Handles listing recent test results and creating new ones for authenticated users
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        one_hour_ago = timezone.now() - timezone.timedelta(hours=1)
-        action_id = request.query_params.get('action')
-        if action_id:
-            test_results = TestResult.objects.filter(action_id=action_id, timestamp__gte=one_hour_ago)
-        else:
-            test_results = TestResult.objects.filter(timestamp__gte=one_hour_ago)
-        serializer = TestResultSerializer(test_results, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = TestResultSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class TestResultDetailAPI(APIView):
-    # Handles retrieving, updating, and deleting a specific test result for authenticated users
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        try:
-            return TestResult.objects.get(pk=pk)
-        except TestResult.DoesNotExist:
-            return None
-
-    def get(self, request, pk):
-        test_result = self.get_object(pk)
-        if test_result is None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = TestResultSerializer(test_result)
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        test_result = self.get_object(pk)
-        if test_result is None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = TestResultSerializer(test_result, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, pk):
-        test_result = self.get_object(pk)
-        if test_result is None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        test_result.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
 class ActionRunNowAPI(APIView):
     # Handles running an action immediately for authenticated users
     permission_classes = [IsAuthenticated]
@@ -329,8 +164,21 @@ class SensorViewSet(viewsets.ModelViewSet):
         return Sensor.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        # Save the sensor with the currently authenticated user
-        serializer.save(user=self.request.user)
+        user_profile = self.request.user.userprofile
+        frequency    = int(self.request.data.get('frequency', MIN_FREQUENCY))
+        sensor_count = Sensor.objects.filter(user=self.request.user).count()
+        if not user_profile.is_paying_user and sensor_count >= MAX_SENSORS:
+            raise serializers.ValidationError({'error': f'Free version can only create up to {MAX_SENSORS} sensors.'})        
+        if not user_profile.is_paying_user and frequency < MIN_FREQUENCY:
+            frequency = MIN_FREQUENCY  # Set to minimum frequency if user is not a paying user
+        serializer.save(user=self.request.user, frequency=frequency)
+
+    def perform_update(self, serializer):
+        user_profile = self.request.user.userprofile
+        frequency = int(self.request.data.get('frequency', serializer.instance.frequency))
+        if not user_profile.is_paying_user and frequency < MIN_FREQUENCY:
+            frequency = MIN_FREQUENCY  # Set to minimum frequency if user is not a paying user
+        serializer.save(frequency=frequency)
             
 class ActionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -343,10 +191,28 @@ class ActionViewSet(viewsets.ModelViewSet):
         return Action.objects.filter(sensor__user=self.request.user)
 
     def perform_create(self, serializer):
-        # Save the action associated with the specified sensor
-        # Ensure the sensor belongs to the connected user
+        user_profile = self.request.user.userprofile
         sensor = serializer.validated_data['sensor']
         if sensor.user != self.request.user:
             raise PermissionDenied("You do not have permission to add actions to this sensor.")
+
+        action_count = Action.objects.filter(sensor=sensor).count()
+        if not user_profile.is_paying_user and action_count >= MAX_ACTIONS:
+            raise serializers.ValidationError(
+                {'error': f'Free version can only create up to {MAX_ACTIONS} actions per sensor.'}
+            )
+        serializer.save()  
         
-        serializer.save()        
+class TestResultViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class   = TestResultSerializer
+
+    def get_queryset(self):
+        one_hour_ago = timezone.now() - timezone.timedelta(hours=1)
+        action_id = self.request.query_params.get('action')
+        if action_id:
+            return TestResult.objects.filter(action_id=action_id, timestamp__gte=one_hour_ago)
+        else:
+            return TestResult.objects.filter(timestamp__gte=one_hour_ago)        
+
+    

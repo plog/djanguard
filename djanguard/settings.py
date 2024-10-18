@@ -152,9 +152,10 @@ STATIC_ROOT        = os.path.join(BASE_DIR, '..','django_djanguard_static')
 DATA_DIR           = os.path.join(BASE_DIR, '..','django_djanguard_data')
 STATICFILES_DIRS   = [os.path.join(BASE_DIR,'static'),]
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+REST_FRAMEWORK = { 'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema' }
 log_level = 'INFO'
 log_size = 2
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

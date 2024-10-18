@@ -249,3 +249,7 @@ span.frequency{
     mask-composite: exclude;
     z-index: -1000;
 }
+
+footer{
+    font-size: 0.7rem;
+}
