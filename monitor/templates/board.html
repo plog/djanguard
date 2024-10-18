@@ -2,20 +2,18 @@
 {% load static %}
 
 {% block content %}
+<h1 class="mb-4">Sensors Dashboard</h1>
+
 <div class="container my-4" x-data="sensorDashboard()">
-    <select class="form-control" id="timezone" x-model="selectedTimezone" @change="fetchSensors"></select>
-    <h1 class="mb-4">Sensor Dashboard</h1>
     <div class="row" id="sensor-container">
         <!-- Sensors will be loaded here dynamically with Alpine.js -->
         <template x-for="sensor in sensors" :key="sensor.id">
             <div class="col-12 col-sm-6 col-lg-4 mb-3">
                 <div class="card box">
                     <div class="card-header pt-3">
-                        <h5 class="card-title">
-                            <img :src="sensor.favico" height="15" x-show="sensor.favico">
+                        <h5>
+                            <img :src="sensor.favico ? sensor.favico : '/static/img/default-favicon.ic'" height="15">
                             <span x-text="sensor.name"></span>&nbsp;
-                            <a :href="'/sensor/' + sensor.id"><i class="bi bi-pencil-square"></i></a>
-                            <a href="#" @click.prevent="deleteSensor(sensor.id)" class="sensor-delete-btn text-danger mx-2"><i class="bi bi-trash3-fill"></i></a>
                             <a href="#"><i class="bi bi-play-circle-fill"></i></a>
                         </h5>
                     </div>

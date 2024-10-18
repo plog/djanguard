@@ -106,10 +106,17 @@ h3.board {
 }
 
 .card-header {
-    background-color: #f3f3f3;
+    background-color:#dcecd8;
     padding: 8px 10px 0px 20px !important;
 }
-
+.card-header h5 {
+    padding: 0px 0px 0px 7px;
+    background-color: #dcecd8;
+    border-radius: 3px;
+    font-weight: 700;
+    color: #377f4b;
+    font-style: italic;
+}
 .card-body{
     padding:10px
 }
@@ -252,4 +259,7 @@ span.frequency{
 
 footer{
     font-size: 0.7rem;
+}
+nav{
+    font-size: 0.8rem;
 }
