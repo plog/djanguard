@@ -3,6 +3,16 @@
 {% load form_tags %}
 {% block content %}
 
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('sensorState', {
+            sensors: [],
+            showEmptyResult: false,
+        });
+        console.log("Alpine store 'sensorState' initialized:", Alpine.store('sensorState'));
+    });
+</script>
+
 <h1 class="mb-2">Sensors Config</h1>
 
 <div x-data="sensorData()" x-init="fetchSensors()" class="box2">
@@ -175,17 +185,18 @@
             </div>
         </form>
     </div>
-
 </div>
 
-<div class="row mb-2 px-3" x-show="showmptyResult">
-    <div class="row px-4">
-        On this page, you can manage your "sensors" and their "actions". 
-        Add, edit, or delete your sensors, and configure actions for each one to monitor different aspects. 
-        This configuration will help you tailor the monitoring process according to your needs.
-        <p class="text-center p-0">
-            <img src="/static/img/18151337.png" width="420">
-        </p>        
+<div x-data>
+    <div class="row mb-2 px-3"  x-show="$store.sensorState.showEmptyResult">
+        <div class="row px-4">
+            On this page, you can manage your "sensors" and their "actions". 
+            Add, edit, or delete your sensors, and configure actions for each one to monitor different aspects. 
+            This configuration will help you tailor the monitoring process according to your needs.
+            <p class="text-center p-0">
+                <img src="/static/img/18151337.png" width="420">
+            </p>        
+        </div>
     </div>
 </div>
 
@@ -204,26 +215,33 @@ const user = parseInt({{request.user.id}});
             errors: {},
             showmptyResult   : false,
 
-            async init() {},
+            async init() {
+                
+            },
 
             async fetchSensors() {
                 try {
                     const response = await fetch('/api/sensors/');
                     if (response.ok) {
                         this.sensors = await response.json();
-                        if(this.sensors.length > 0){
+                        // this.$store.sensorState.sensors = this.sensor;
+                        Alpine.store('sensorState').sensors = this.sensor;
+                        if (Array.isArray(this.sensors) && this.sensors.length > 0) {
                             const first = this.sensors[0];
-                            console.log(first)
                             this.selectSensor(first);
+                            Alpine.store('sensorState').showEmptyResult = false;
                         }else{
-                            this.showmptyResult=true;
-                        }                        
+                            Alpine.store('sensorState').showEmptyResult = true;
+                        }    
+                        console.log("Updated Alpine store:",Alpine.store('sensorState'))                    
                     } else {
                         console.error('Failed to fetch sensors');
                     }
                 } catch (error) {
                     console.error('Error fetching sensors:', error);
                 }
+                console.log(Alpine.store('sensorState').showEmptyResult)
+                await Alpine.nextTick();
             },
 
             showAddSensorForm() {

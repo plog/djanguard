@@ -43,11 +43,12 @@ class ConfigView(LoginRequiredMixin, TemplateView):
     template_name = 'config.html'
     
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
+        context                 = super().get_context_data(**kwargs)
+        profile, created        = UserProfile.objects.get_or_create(user=self.request.user)
         if(created):
             profile.is_paying_user = False
-        return super().get_context_data(**kwargs)
+            profile.save()
+        return context
     
 class SensorDetailView(LoginRequiredMixin, TemplateView):
     # Displays the details of a specific sensor for editing by logged-in users
