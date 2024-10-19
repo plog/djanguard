@@ -95,14 +95,14 @@
                                 x-bind:src="testResults[action.id] ? testResults[action.id].img : '/static/img/pixel.png'" 
                                 width="45" 
                                 style="margin: 0px 3px 3px 0px;"
-                                x-bind:title="testResults[action.id] ? testResults[action.id].response : 'No results available'"
-                                >
-                            <img x-show="!testResults[action.id]"
-                                x-bind:src="!testResults[action.id] ? action.img: '/static/img/pixel.png'" 
+                                x-bind:title="testResults[action.id] ? testResults[action.id].response : ''"
+                            >
+                            <img x-show="!testResults[action.id] && action.img"
+                                x-bind:src="!testResults[action.id] && action.img ? action.img: '/static/img/pixel.png'" 
                                 width="45" 
                                 style="margin: 0px 3px 3px 0px;"
-                                x-bind:title="action.latest_test_result ? 'Expected: ' + action.latest_test_result.expected_value + ', Actual: ' + action.latest_test_result.actual_value : 'No test result available'"
-                                >                                 
+                                x-bind:title="action.latest_test_result ? 'Expected: ' + action.latest_test_result.expected_value + ', Actual: ' + action.latest_test_result.actual_value : ''"
+                            >                                 
                         </div>
                     </td>
                 </tr>
@@ -120,16 +120,13 @@
                     <!-- Display error if exists -->
                     <div class="text-danger" x-show="errors.action_name" x-text="errors.action_name ? errors.action_name[0] : ''"></div>
                 </div>
-            </div>
-
-            <div class="row">
                 <div class="col">
                     <label for="action-path" class="form-label">Action Path:</label>
                     <input type="text" class="form-control" id="action-path" x-model="actionForm.action_path" required>
                     <!-- Display error if exists -->
                     <div class="text-danger" x-show="errors.action_path" x-text="errors.action_path ? errors.action_path[0] : ''"></div>
                 </div>
-            </div>    
+            </div>
 
             <div class="row">
                 <div class="col">
@@ -144,15 +141,6 @@
                 </div>
             </div>
             <!-- ---------- conditional diaplay ----------- -->
-            <div class="row" x-show="showExpectedValue">
-                <div class="col">
-                    <label for="expected-value" class="form-label">Expected value:</label>
-                    <input type="text" class="form-control" id="expected-value" x-model="actionForm.expected_value" required>
-                    <!-- Display error if exists -->
-                    <div class="text-danger" x-show="errors.expected_value" x-text="errors.expected_value ? errors.expected_value[0] : ''"></div>
-                </div>
-            </div>  
-
             <div class="row" x-show="showActionType">
                 <div class="col">
                     <label for="action-type" class="form-label">Action Type:</label>
@@ -164,6 +152,12 @@
                     <!-- Display error if exists -->
                     <div class="text-danger" x-show="errors.action_type" x-text="errors.action_type ? errors.action_type[0] : ''"></div>
                 </div>
+                <div class="col">
+                    <label for="expected-value" class="form-label" x-text="`${expectedValueText}`">Expected value:</label>
+                    <input type="text" class="form-control" id="expected-value" x-model="actionForm.expected_value" required>
+                    <!-- Display error if exists -->
+                    <div class="text-danger" x-show="errors.expected_value" x-text="errors.expected_value ? errors.expected_value[0] : ''"></div>
+                </div>                
             </div>
 
             <div class="row" x-show="showSeleniumScript">
@@ -198,7 +192,7 @@
             Add, edit, or delete your sensors, and configure actions for each one to monitor different aspects. 
             This configuration will help you tailor the monitoring process according to your needs.
             <p class="text-center p-0">
-                <img src="/static/img/18151337.png" width="420">
+                <img src="/static/img/18151337.png" width="420" class="img-fluid" >
             </p>        
         </div>
     </div>
@@ -219,8 +213,7 @@ const user = parseInt({{request.user.id}});
             errors: {},
             showmptyResult   : false,
 
-            async init() {
-                
+            async init() {      
             },
 
             async fetchSensors() {
@@ -348,9 +341,9 @@ const user = parseInt({{request.user.id}});
             testResults: {},
             selectedSensorName: '',  // From sensorData(): To store the selected sensor's name
             selectedSensorId: null,  // From sensorData(): To store the selected sensor's ID 
-
+            expectedValueText: 'Expected value:',
+            
             // Visibility flags for the form fields
-            showExpectedValue : false,
             showActionType    : false,
             showSeleniumScript: false,
             showPayload       : false,            
@@ -377,11 +370,22 @@ const user = parseInt({{request.user.id}});
             updateVisibilityFlags() {
                 // Determine visibility of fields based on assertion type
                 const assertionType     = this.actionForm.assertion_type;
-                console.log(assertionType);
-                this.showExpectedValue  = ['status_code', 'contains_keyword'].includes(assertionType);
-                this.showActionType     = ['status_code', 'contains_keyword'].includes(assertionType);
-                this.showSeleniumScript = assertionType === 'selenium';
-                this.showPayload        = ['status_code', 'contains_keyword'].includes(assertionType);
+                if(assertionType){
+                    this.showSeleniumScript = assertionType === 'selenium';
+                    this.showActionType     = ['status_code', 'contains_keyword'].includes(assertionType);
+                    this.showPayload        = ['status_code', 'contains_keyword'].includes(assertionType);
+                }else{
+                    this.showSeleniumScript = false;
+                    this.showActionType     = true;
+                    this.showPayload        = true;
+                }
+                console.log(assertionType)
+                if(!assertionType || assertionType === 'status_code'){
+                    this.expectedValueText = 'Expected value:';
+                }else{
+                    this.expectedValueText = 'Keyword:';
+                }
+                
             },
 
             async fetchActions(sensorId) {
@@ -393,7 +397,7 @@ const user = parseInt({{request.user.id}});
                             if (action.latest_test_result) {
                                 if (
                                     action.latest_test_result.expected_value === action.latest_test_result.actual_value ||
-                                    action.latest_test_result.actual_value === 'pass'
+                                    action.latest_test_result.actual_value   === 'pass'
                                 ) {
                                     action.img = "/static/img/pass.png";
                                 } else {
@@ -403,6 +407,7 @@ const user = parseInt({{request.user.id}});
                                 // Default image when there's no test result available
                                 action.img = "/static/img/no-result.png";
                             }
+                            action.runTest = false;
                             return action;
                         });                        
                     } else {
@@ -504,6 +509,9 @@ const user = parseInt({{request.user.id}});
             },
             
             async runTest(actionId) {
+                const element   = this.actions.find(action => action.id === actionId);
+                element.runTest = true;
+                console.log(this.actions, actionId)
                 const result = await testAction(actionId,(result)=>{
                     this.testResults = { ...this.testResults, [actionId]: result };
                 });
