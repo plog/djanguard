@@ -18,6 +18,7 @@
             For more detailed configuration or to add new sensors and actions, head to the <a href="{% url 'web_config' %}">Config</a>
         </p>
     </div>
+
     <div class="row" id="sensor-container">
         <!-- Sensors will be loaded here dynamically with Alpine.js -->
         <template x-for="sensor in sensors" :key="sensor.id">
@@ -26,7 +27,8 @@
                     <div class="card-header pt-3">
                         <h5>
                             <img :src="sensor.favico ? sensor.favico : '/static/img/default-favicon.ico'" height="15">
-                            <span x-text="sensor.name"></span>&nbsp;                            
+                            <span x-text="sensor.name"></span>&nbsp;
+                            <a :href="`/config/#${sensor.id}`"><i class="bi bi-pencil-square"></i></a>
                         </h5>
                     </div>
 
