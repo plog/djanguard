@@ -156,11 +156,10 @@ span.frequency{
 .board-test-img{
     display: inline;
 }
-.image-board{
-    height: 130px;
-    overflow: hidden;
+.image-board {
+    height: 90px;
+    overflow: scroll;
     position: relative;
-    
 }
 
 .bi-arrow-clockwise::before{

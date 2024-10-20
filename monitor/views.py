@@ -194,21 +194,26 @@ class SensorViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user_profile = self.request.user.userprofile
-        frequency    = int(self.request.data.get('frequency', MIN_FREQUENCY))
         sensor_count = Sensor.objects.filter(user=self.request.user).count()
+        
         if not user_profile.is_paying_user and sensor_count >= MAX_SENSORS:
             raise serializers.ValidationError({'error': f'Free version can only create up to {MAX_SENSORS} sensors.'})        
+
+        frequency = int(self.request.data.get('frequency', MIN_FREQUENCY))
         if not user_profile.is_paying_user and frequency < MIN_FREQUENCY:
             frequency = MIN_FREQUENCY  # Set to minimum frequency if user is not a paying user
+
         serializer.save(user=self.request.user, frequency=frequency)
 
     def perform_update(self, serializer):
         user_profile = self.request.user.userprofile
         frequency = int(self.request.data.get('frequency', serializer.instance.frequency))
+        
         if not user_profile.is_paying_user and frequency < MIN_FREQUENCY:
             frequency = MIN_FREQUENCY  # Set to minimum frequency if user is not a paying user
+
         serializer.save(frequency=frequency)
-            
+
 class ActionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class   = ActionSerializer
@@ -216,22 +221,23 @@ class ActionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         sensor_id = self.request.query_params.get('sensor', None)
         if sensor_id:
-            return Action.objects.filter(sensor__id=sensor_id, sensor__user=self.request.user)
+            sensor = get_object_or_404(Sensor, id=sensor_id, user=self.request.user)
+            return Action.objects.filter(sensor=sensor)
         return Action.objects.filter(sensor__user=self.request.user)
 
     def perform_create(self, serializer):
         user_profile = self.request.user.userprofile
         sensor = serializer.validated_data['sensor']
+
         if sensor.user != self.request.user:
             raise PermissionDenied("You do not have permission to add actions to this sensor.")
 
         action_count = Action.objects.filter(sensor=sensor).count()
         if not user_profile.is_paying_user and action_count >= MAX_ACTIONS:
-            raise serializers.ValidationError(
-                {'error': f'Free version can only create up to {MAX_ACTIONS} actions per sensor.'}
-            )
-        serializer.save()  
-        
+            raise serializers.ValidationError({'error': f'Free version can only create up to {MAX_ACTIONS} actions per sensor.'})
+
+        serializer.save()
+
 class TestResultViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class   = TestResultSerializer
@@ -239,9 +245,9 @@ class TestResultViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         one_hour_ago = timezone.now() - timezone.timedelta(hours=1)
         action_id = self.request.query_params.get('action')
+        
         if action_id:
-            return TestResult.objects.filter(action_id=action_id, timestamp__gte=one_hour_ago)
-        else:
-            return TestResult.objects.filter(timestamp__gte=one_hour_ago)        
+            action = get_object_or_404(Action, id=action_id, sensor__user=self.request.user)
+            return TestResult.objects.filter(action=action, timestamp__gte=one_hour_ago)
 
-    
+        return TestResult.objects.filter(action__sensor__user=self.request.user, timestamp__gte=one_hour_ago)

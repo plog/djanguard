@@ -39,6 +39,7 @@ __pypackages__/
 *.so
 *.spec
 *$py.class
+.vscode
 /site
 build/
 celerybeat-schedule
@@ -77,3 +78,8 @@ var/
 venv.bak/
 venv/
 wheels/
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
