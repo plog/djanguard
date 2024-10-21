@@ -291,7 +291,7 @@ class ActionViewSet(viewsets.ModelViewSet):
     def run(self, request, pk=None):
         try:
             action          = get_object_or_404(Action, pk=pk)
-            response        = run_playwright_action(id)
+            response        = run_playwright_action(pk)
             response['url'] = action.sensor.url + action.action_path
             # Check if the current user is allowed to access this action
             if action.sensor.user != request.user:
@@ -334,7 +334,7 @@ class ActionViewSet(viewsets.ModelViewSet):
             return FileResponse(open(screenshot_path, 'rb'), content_type='image/png')
         
         except Exception as e:
-            logger.error(f"Error retrieving screenshot for action {id}: {str(e)}")
+            logger.error(f"Error retrieving screenshot for action {pk}: {str(e)}")
             return Response({"error": "An error occurred while retrieving the screenshot."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class TestResultViewSet(viewsets.ModelViewSet):
