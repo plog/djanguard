@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django_celery_results',
     'rest_framework',
+    'rest_framework.authtoken',
+    'oauth2_provider',
     'corsheaders',    
     'monitor',
     'website',
@@ -144,7 +146,29 @@ STATIC_ROOT        = os.path.join(BASE_DIR, '..','django_djanguard_static')
 DATA_DIR           = os.path.join(BASE_DIR, '..','django_djanguard_data')
 STATICFILES_DIRS   = [os.path.join(BASE_DIR,'static'),]
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-REST_FRAMEWORK = { 'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema' }
+REST_FRAMEWORK = { 
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'common.authentication.APIKeyAuthentication', 
+        'rest_framework.authentication.SessionAuthentication',  # Keep your current session-based authentication
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    )    
+}
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': True,
+    'SECURITY_DEFINITIONS': {
+        'Basic': {'type': 'basic'},
+        'APIKey': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'Provide the API key as a Bearer token in the Authorization header.'
+        },
+    },
+}
 log_level = 'INFO'
 log_size = 2
 

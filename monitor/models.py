@@ -1,6 +1,8 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django_cryptography.fields import encrypt
+from django.conf import settings
 
 import json
 
@@ -71,3 +73,13 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} Profile"
+
+class UserKey(models.Model):
+    user        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='keys')
+    key         = models.CharField(max_length=100, unique=True, default=uuid.uuid4)
+    created_at  = models.DateTimeField(auto_now_add=True)
+    description = models.CharField(max_length=255, blank=True)  # Optional description field
+
+    def __str__(self):
+        return f"{self.user.username} - {self.key}"
+    

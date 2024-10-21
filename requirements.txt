@@ -11,6 +11,7 @@ django-contact-form
 django-cors-headers
 django-cryptography-django5
 django-import-export
+django-oauth-toolkit
 django-ratelimit
 django-rosetta
 djangorestframework

@@ -40,6 +40,68 @@
                 </div>
             </div>
 
+            <div class="box2 mb-4">
+                <h2>Your API Keys</h2>
+                <ul>
+                    {% for key in user_keys %}
+                        <li>
+                            <strong>{{ key.key }}</strong><br>
+                             Created at: {{ key.created_at }}
+                            <form method="post" action="{% url 'profile' %}" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="delete_key" value="{{ key.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete Key</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+                
+                <form method="post" action="{% url 'profile' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="generate_key" value="1">
+                    <button type="submit" class="btn btn-primary">Generate New Key</button>
+                </form>
+            </div>
+
+            <h1>How to Use Your API Key</h1>
+
+            <p>After generating an API key, you can use it to authenticate your requests when interacting with the API. Below are the steps and examples to help you understand how to use your API key effectively.</p>
+        
+            <h2>1. API Authentication</h2>
+            <p>To authenticate, you need to include your <strong>API key</strong> in the request headers. Typically, this is done using a <code>Bearer Token</code> in the <code>Authorization</code> header.</p>
+        
+            <h2>2. Using the Key with <code>curl</code></h2>
+            <p>You can use your key to make an authenticated API request by including it in the request headers, as shown below:</p>
+            <pre><code>curl -H "Authorization: Bearer YOUR_API_KEY_HERE" -X GET https://your-domain.com/api/endpoint/</code></pre>
+            <p>Replace <code>YOUR_API_KEY_HERE</code> with the key you generated in your profile.</p>
+        
+            <h2>3. HTTP Header for Authentication</h2>
+            <p>The API expects an <code>Authorization</code> header in this format:</p>
+            <pre><code>Authorization: Bearer YOUR_API_KEY_HERE</code></pre>
+            <p>Always replace <code>YOUR_API_KEY_HERE</code> with the actual key you generated from your profile.</p>
+        
+            <h2>4. Example with JavaScript Fetch API</h2>
+            <p>If you want to make a request using JavaScript, you can include the API key as shown below:</p>
+            <pre><code>fetch('https://your-domain.com/api/endpoint/', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer YOUR_API_KEY_HERE'
+            }
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));</code></pre>
+        
+            <div class="note">
+                <h3>Tips for Security</h3>
+                <ul>
+                    <li><strong>Keep Your API Key Secure:</strong> Do not share your API key publicly or include it in places that others can easily access.</li>
+                    <li><strong>Rotate Your Keys Periodically:</strong> To enhance security, delete old keys and generate new ones when needed.</li>
+                    <li><strong>Use HTTPS:</strong> Always make requests over HTTPS to ensure your key is protected from interception.</li>
+                </ul>
+            </div>
+        
+            <p>By following these steps, you can interact securely with the API using your generated keys.</p>
             <!-- Manage Subscription Section
             <div class="box2 mb-4">
                 <h2 class="mb-0">Manage Subscription</h2>
@@ -53,6 +115,8 @@
                     {% endif %}
                 </div>
             </div> -->
+
+
 
         </div>
     </div>

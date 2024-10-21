@@ -42,7 +42,7 @@
                 <ul class="navbar-nav">
                     <li class="nav-item"><a class="nav-link" href="{% url 'web_board' %}">Board</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'web_config' %}">Config</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/docs">API</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/swagger">API</a></li>
                     {% if user.is_superuser %}<li class="nav-item"><a class="nav-link" href="/{{ ADMIN_URL }}/"><b>Admin</b></a></li>{% endif %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'profile'%}">{{user}}</a></li>
                 </ul>

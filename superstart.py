@@ -13,32 +13,36 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 from dotenv import load_dotenv
+import graypy
 
 load_dotenv()
 
-ENVIRONMENT        = os.getenv('ENVIRONMENT', 'development').lower()
-SERVICE_ROLE       = os.getenv('SERVICE_ROLE', 'django').lower()
-MEDIA_ACCESS_TOKEN = os.getenv('MEDIA_ACCESS_TOKEN')
-
-MANAGE_PY_CMD = ['python', 'manage.py']
-NGINX_CMD     = ['/usr/sbin/nginx']
-
-# Paths
+ENVIRONMENT         = os.getenv('ENVIRONMENT', 'development').lower()
+SERVICE_ROLE        = os.getenv('SERVICE_ROLE', 'django').lower()
+MEDIA_ACCESS_TOKEN  = os.getenv('MEDIA_ACCESS_TOKEN')
+GRAYLOG_HOST        = os.getenv('GRAYLOG_HOST', 'graylog')  # Graylog server host
+GRAYLOG_PORT        = int(os.getenv('GRAYLOG_PORT', 12201))   # Graylog port (default is 12201 for GELF UDP)
+MANAGE_PY_CMD       = ['python', 'manage.py']
+NGINX_CMD           = ['/usr/sbin/nginx']
 NGINX_CONF_TEMPLATE = '/app/config/djanguard_nginx.conf'
 NGINX_CONF_PATH     = '/etc/nginx/conf.d/default.conf'
 LOGS_PATH           = '/app/logs/'  # Path to the logs directory
 APP_NAME            = os.getenv('APP_NAME')
 
-LOG_FILE   = os.path.join(LOGS_PATH, f'superstart_{SERVICE_ROLE}.log')
-logger     = logging.getLogger('superstart')
+# Set up the logger
+logger = logging.getLogger('superstart')
 logger.setLevel(logging.INFO)
-handler    = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=5)
-formatter  = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+
+# Add Graylog handler
+graylog_handler = graypy.GELFUDPHandler(GRAYLOG_HOST, GRAYLOG_PORT)  # Use GELFTCPHandler for TCP
+logger.addHandler(graylog_handler)
+
+# Optionally, add console handler for local development
 console_handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
+
 
 BEAT_CMD     = ['celery', '-A', APP_NAME, 'beat'  ,'--loglevel=info','--logfile=/app/logs/celery_beat.log']
 CELERY_CMD   = ['celery', '-A', APP_NAME, 'worker','--concurrency=5','--loglevel=info','--logfile=/app/logs/celery_worker.log']
