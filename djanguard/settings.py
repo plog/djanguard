@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     'django_celery_results',
     'rest_framework',
     'rest_framework.authtoken',
-    'oauth2_provider',
     'corsheaders',    
     'monitor',
     'website',

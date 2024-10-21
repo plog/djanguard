@@ -20,7 +20,7 @@ class SensorSerializer(serializers.ModelSerializer):
     
 class ActionSerializer(serializers.ModelSerializer):
     latest_test_result = serializers.SerializerMethodField()
-    sensor = serializers.PrimaryKeyRelatedField(queryset=Sensor.objects.all())
+    sensor = SensorSerializer()
     
     class Meta:
         model = Action
