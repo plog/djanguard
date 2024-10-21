@@ -1,43 +1,34 @@
 from pathlib import Path
 from decouple import config
-from celery.schedules import crontab
+import logging
+import graypy
 from datetime import datetime, timedelta
 import os
 
-BASE_DIR              = Path(__file__).resolve().parent.parent
-ADMIN_URL             = config('ADMIN_URL')
-LOGIN_REDIRECT_URL    = '/config/'
-LOGOUT_REDIRECT_URL   = LOGIN_REDIRECT_URL
-LOGIN_URL             = f'/accounts/login/?next={LOGIN_REDIRECT_URL}'
-GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID')
-if not GOOGLE_OAUTH_CLIENT_ID:
-    raise ValueError(
-        'GOOGLE_OAUTH_CLIENT_ID is missing.' 
-        'Have you put it in a file at core/.env ?'
-    )
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-]
-
-SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
-SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
-SECRET_KEY = 'django-insecure-z*ypnwid#cw-(*u7w4b684p$!&f9h83=j1&8v2tidz6-9+7q59'
-DEBUG      = config('DEBUG', default=False, cast=bool)
-
-CELERY_BROKER_URL        = config('CELERY_BROKER_URL')
-CELERY_RESULT_BACKEND    = config('CELERY_BROKER_URL')
-CELERY_ACCEPT_CONTENT    = ['json']
-CELERY_TASK_SERIALIZER   = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE          = 'UTC'
-CELERY_RESULT_BACKEND    = 'django-db'
-CELERY_RESULT_EXTENDED   = True
+BASE_DIR                                  = Path(__file__).resolve().parent.parent
+ADMIN_URL                                 = config('ADMIN_URL')
+APP_NAME                                  = config('APP_NAME')
+DEBUG                                     = config('DEBUG', default=False, cast=bool)
+LOGIN_REDIRECT_URL                        = '/config/'
+LOGOUT_REDIRECT_URL                       = LOGIN_REDIRECT_URL
+LOGIN_URL                                 = f'/accounts/login/?next={LOGIN_REDIRECT_URL}'
+GOOGLE_OAUTH_CLIENT_ID                    = config('GOOGLE_OAUTH_CLIENT_ID')
+AUTHENTICATION_BACKENDS                   = ['django.contrib.auth.backends.ModelBackend']
+SECURE_REFERRER_POLICY                    = 'no-referrer-when-downgrade'
+SECURE_CROSS_ORIGIN_OPENER_POLICY         = "same-origin-allow-popups"
+SECRET_KEY                                = 'django-insecure-z*ypnwid#cw-(*u7w4b684p$!&f9h83=j1&8v2tidz6-9+7q59'
+CELERY_BROKER_URL                         = config('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND                     = config('CELERY_BROKER_URL')
+CELERY_ACCEPT_CONTENT                     = ['json']
+CELERY_TASK_SERIALIZER                    = 'json'
+CELERY_RESULT_SERIALIZER                  = 'json'
+CELERY_TIMEZONE                           = 'UTC'
+CELERY_RESULT_BACKEND                     = 'django-db'
+CELERY_RESULT_EXTENDED                    = True
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CELERY_TASK_SOFT_TIME_LIMIT = 1600  # 10 minutes soft time limit
-CELERY_TASK_TIME_LIMIT = 1200  # 20 minutes hard time limit
-CELERY_TASK_RESULT_EXPIRES = timedelta(minutes=15)
-
+CELERY_TASK_SOFT_TIME_LIMIT               = 1600  # 10 minutes soft time limit
+CELERY_TASK_TIME_LIMIT                    = 1200  # 20 minutes hard time limit
+CELERY_TASK_RESULT_EXPIRES                = timedelta(minutes=15)
 CELERY_BEAT_SCHEDULE = {
     'check-sensors-periodically': {
         'task': 'monitor.tasks.schedule_sensor_actions',
@@ -157,6 +148,67 @@ REST_FRAMEWORK = { 'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoS
 log_level = 'INFO'
 log_size = 2
 
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'formatters': {
+#         'verbose': {
+#             'format': '{levelname} {asctime} {module} {message}',
+#             'style': '{',
+#         }
+#     },
+#     'handlers': {
+#         'file_general': {
+#             'level'      : log_level,
+#             'class'      : 'logging.handlers.RotatingFileHandler',
+#             'filename'   : os.path.join(BASE_DIR, 'logs','django_general.log'),
+#             'maxBytes'   : 1024*1024*log_size,
+#             'backupCount': 5,
+#             'formatter'  : 'verbose',
+#         },
+#         'file_country_restriction': {
+#             'level'      : log_level,
+#             'class'      : 'logging.handlers.RotatingFileHandler',
+#             'filename'   : os.path.join(BASE_DIR,'logs','country_restriction.log'),
+#             'maxBytes'   : 1024*1024*log_size,
+#             'backupCount': 5,
+#             'formatter'  : 'verbose',
+#         },      
+#         'file_errors': {
+#             'level'      : log_level,
+#             'class'      : 'logging.handlers.RotatingFileHandler',
+#             'filename'   : os.path.join(BASE_DIR,'logs','django_errors.log'),
+#             'maxBytes'   : 1024*1024*log_size,
+#             'backupCount': 5,
+#             'formatter'  : 'verbose',
+#         }, 
+#         'celery': {
+#             'level'      : log_level,
+#             'class'      : 'logging.handlers.RotatingFileHandler',
+#             'filename'   : os.path.join(BASE_DIR,'logs','celery_process.log'),
+#             'maxBytes'   : 1024*1024*log_size, 
+#             'backupCount': 5,
+#             'formatter'  : 'verbose',
+#         },         
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['file_general'],
+#             'level': log_level,
+#             'propagate': False,
+#         },
+#         'country_restriction': {
+#             'handlers': ['file_country_restriction'],
+#             'level': log_level,
+#             'propagate': False,
+#         },
+#         'celery_process': {
+#             'handlers': ['celery'],
+#             'level': log_level,
+#             'propagate': False,
+#         },
+#     },
+# }
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -167,54 +219,41 @@ LOGGING = {
         }
     },
     'handlers': {
-        'file_general': {
-            'level'      : log_level,
-            'class'      : 'logging.handlers.RotatingFileHandler',
-            'filename'   : os.path.join(BASE_DIR, 'logs','django_general.log'),
-            'maxBytes'   : 1024*1024*log_size,
-            'backupCount': 5,
-            'formatter'  : 'verbose',
+        'gelf': {
+            'level': 'DEBUG',  # Set your desired level
+            'class': 'graypy.GELFUDPHandler',
+            'host': 'graylog',  # Replace with Graylog server IP or hostname
+            'port': 12201,
+            'formatter': 'verbose',
         },
-        'file_country_restriction': {
-            'level'      : log_level,
-            'class'      : 'logging.handlers.RotatingFileHandler',
-            'filename'   : os.path.join(BASE_DIR,'logs','country_restriction.log'),
-            'maxBytes'   : 1024*1024*log_size,
-            'backupCount': 5,
-            'formatter'  : 'verbose',
-        },      
-        'file_errors': {
-            'level'      : log_level,
-            'class'      : 'logging.handlers.RotatingFileHandler',
-            'filename'   : os.path.join(BASE_DIR,'logs','django_errors.log'),
-            'maxBytes'   : 1024*1024*log_size,
-            'backupCount': 5,
-            'formatter'  : 'verbose',
-        }, 
-        'celery': {
-            'level'      : log_level,
-            'class'      : 'logging.handlers.RotatingFileHandler',
-            'filename'   : os.path.join(BASE_DIR,'logs','celery_process.log'),
-            'maxBytes'   : 1024*1024*log_size, 
-            'backupCount': 5,
-            'formatter'  : 'verbose',
-        },         
     },
     'loggers': {
         'django': {
-            'handlers': ['file_general'],
-            'level': log_level,
+            'handlers': ['gelf'],
+            'level': 'DEBUG',
             'propagate': False,
         },
-        'country_restriction': {
-            'handlers': ['file_country_restriction'],
-            'level': log_level,
+        'django.country_restriction': {
+            'handlers': ['gelf'],
+            'level': 'DEBUG',
             'propagate': False,
         },
         'celery_process': {
-            'handlers': ['celery'],
-            'level': log_level,
+            'handlers': ['gelf'],
+            'level': 'DEBUG',
             'propagate': False,
         },
     },
 }
+
+# Override logging to add custom fields automatically
+class DjangoGELFHandler(logging.Handler):
+    def emit(self, record):
+        if not hasattr(record, '_app_name'):
+            record._app_name = 'my_django_app'  # Replace with a unique name for each application
+        super().emit(record)
+
+# Add this custom handler to your logger
+handler = DjangoGELFHandler()
+logger = logging.getLogger('django')
+logger.addHandler(handler)

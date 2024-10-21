@@ -5,6 +5,7 @@ from django.db.models import Count
 class SensorSerializer(serializers.ModelSerializer):
     short_url     = serializers.SerializerMethodField()
     actions_count = serializers.SerializerMethodField()
+    
     class Meta:
         model = Sensor
         fields = '__all__'
@@ -19,10 +20,18 @@ class SensorSerializer(serializers.ModelSerializer):
     
 class ActionSerializer(serializers.ModelSerializer):
     latest_test_result = serializers.SerializerMethodField()
+    sensor = serializers.SerializerMethodField()
     
     class Meta:
         model = Action
         fields = '__all__'
+
+    def get_sensor(self, obj):
+        # Get the latest test result for the action using timestamp
+        sensor = obj.sensor
+        if sensor:
+            return SensorSerializer(sensor).data
+        return None
 
     def get_latest_test_result(self, obj):
         # Get the latest test result for the action using timestamp

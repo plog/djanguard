@@ -119,7 +119,6 @@ async def async_run_playwright_action(action_id):
                 async with session.request(method=action.action_type, url=action.sensor.url + action.action_path, headers=headers, json=data) as response:
                     if action.assertion_type =='contains_keyword':
                         response_text = await response.text()
-                        logger.error(f'HEREFSDLFKLSDKFLSDKFLKSDLFKSLDFLKSDL: {response_text}')
                         if test_result.expected_value in response_text:
                             test_result.actual_value = 'pass'
                             test_result.body = f'{action.action_name} found:{test_result.expected_value}'

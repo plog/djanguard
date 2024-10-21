@@ -27,7 +27,7 @@ NGINX_CMD     = ['/usr/sbin/nginx']
 NGINX_CONF_TEMPLATE = '/app/config/djanguard_nginx.conf'
 NGINX_CONF_PATH     = '/etc/nginx/conf.d/default.conf'
 LOGS_PATH           = '/app/logs/'  # Path to the logs directory
-APP_NAME            = 'djanguard'
+APP_NAME            = os.getenv('APP_NAME')
 
 LOG_FILE   = os.path.join(LOGS_PATH, f'superstart_{SERVICE_ROLE}.log')
 logger     = logging.getLogger('superstart')

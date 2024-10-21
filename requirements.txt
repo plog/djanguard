@@ -17,6 +17,7 @@ djangorestframework
 drf-yasg
 geoip2
 google-api-python-client
+graypy
 gunicorn
 openpyxl
 pandas

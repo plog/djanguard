@@ -16,17 +16,17 @@ class SensorAdmin(admin.ModelAdmin):
 @admin.register(Action)
 class ActionAdmin(admin.ModelAdmin):
     search_fields = ['action_name', 'action_type', 'sensor__name']
-    list_display  = ['action_name', 'action_type', 'action_path', 'last_execution', 'sensor', 'assertion_type', 'expected_value', 'sequence']
+    list_display  = ['id', 'action_name', 'action_type', 'action_path', 'last_execution', 'sensor', 'assertion_type', 'expected_value', 'sequence']
 
 # Custom Admin for TestResult Model
 @admin.register(TestResult)
 class TestResultAdmin(admin.ModelAdmin):
     search_fields = ['action__action_name', 'test_type', 'expected_value', 'actual_value']
-    list_display  = ['action', 'test_type', 'expected_value', 'actual_value', 'timestamp']
+    list_display  = ['id', 'action', 'test_type', 'expected_value', 'actual_value', 'timestamp']
 
 # Custom Admin for UserProfile Model
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     search_fields = ['user']
-    list_display = ['user', 'is_paying_user']
+    list_display = ['id', 'user', 'is_paying_user']
 

@@ -117,7 +117,7 @@ function onlyAlphaNumericKey(evt) {
 
 async function testAction(actionId, callback) {
     $.ajax({
-        url    : `/api/action/${actionId}/run/`,
+        url    : `/api/actions/${actionId}/run/`,
         type   : 'POST',
         headers: {'X-CSRFToken': Cookies.get('csrftoken')},
         success: function(response) {

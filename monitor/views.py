@@ -18,6 +18,8 @@ from .models import Action, Sensor, TestResult, UserProfile
 from .serializers import ActionSerializer, SensorSerializer, TestResultSerializer
 from .forms import UserForm, UserProfileForm
 from rest_framework import viewsets
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 import logging
 import os
@@ -135,13 +137,34 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 class ActionRunNowAPI(APIView):
     # Handles running an action immediately for authenticated users
     permission_classes = [IsAuthenticated]
-
-    def post(self, request, action_id):
+    @swagger_auto_schema(
+        operation_id          = "test_action",
+        operation_summary     = "Test an Action",
+        operation_description = "Execute the specified action identified by 'id' and return the outcome.",
+        responses={
+            200: openapi.Response(
+                description="Action executed successfully",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'status': openapi.Schema(type=openapi.TYPE_STRING, description='Result of the action, e.g., success or fail'),
+                        'output': openapi.Schema(type=openapi.TYPE_STRING, description='The output of the executed action')
+                    }
+                )
+            )
+        }
+    )
+    def post(self, request, id):
         try:
-            action = get_object_or_404(Action, pk=action_id)
-            response = run_playwright_action(action_id)
+            action          = get_object_or_404(Action, pk=id)
+            response        = run_playwright_action(id)
             response['url'] = action.sensor.url + action.action_path
-            return Response(response, status=status.HTTP_200_OK)
+            # Check if the current user is allowed to access this action
+            if action.sensor.user != request.user:
+                logger.error("You do not have permission to access this action's screenshots.")
+                raise PermissionDenied("You do not have permission to access this action's screenshots.")
+            else:
+                return Response(response, status=status.HTTP_200_OK)
         except Action.DoesNotExist as exc:
             logger.error(f"ActionRunNowAPI DoesNotExist {exc}")
             return Response({'error': 'Action not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -152,9 +175,22 @@ class ActionRunNowAPI(APIView):
 class ActionScreenshotAPIView(APIView):
     # Handles retrieving the latest screenshot of a specific action for authenticated users
     permission_classes = [IsAuthenticated]
-
-    def get(self, request, action_id):
-        action = get_object_or_404(Action, pk=action_id)
+    @swagger_auto_schema(
+        operation_id="get_action_screenshot",
+        operation_summary="Get the latest Screenshot",
+        operation_description="Retrieve the latest screenshot associated with a specific action identified by the 'id' parameter.",
+        responses={
+            200: openapi.Response(
+                description="Screenshot fetched successfully",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_FILE,
+                    description="The screenshot image file"
+                )
+            )
+        }
+    )
+    def get(self, request, id):
+        action = get_object_or_404(Action, pk=id)
 
         # Check if the current user is allowed to access this action
         if action.sensor.user != request.user:
@@ -179,7 +215,7 @@ class ActionScreenshotAPIView(APIView):
             return FileResponse(open(screenshot_path, 'rb'), content_type='image/png')
         
         except Exception as e:
-            logger.error(f"Error retrieving screenshot for action {action_id}: {str(e)}")
+            logger.error(f"Error retrieving screenshot for action {id}: {str(e)}")
             return Response({"error": "An error occurred while retrieving the screenshot."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -189,6 +225,28 @@ class SensorViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class   = SensorSerializer
     
+    @swagger_auto_schema(
+        operation_id="list_sensors",
+        operation_summary="List All Sensors",
+        operation_description="Retrieve a list of all sensors currently configured in the system.",
+        responses={
+            200: openapi.Response(
+                description="A list of sensors",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'id': openapi.Schema(type=openapi.TYPE_INTEGER, description='The ID of the sensor'),
+                            'name': openapi.Schema(type=openapi.TYPE_STRING, description='The name of the sensor'),
+                            'url': openapi.Schema(type=openapi.TYPE_STRING, description='URL that the sensor is monitoring'),
+                            'frequency': openapi.Schema(type=openapi.TYPE_INTEGER, description='Frequency of monitoring in seconds')
+                        }
+                    )
+                )
+            )
+        }
+    )
     def get_queryset(self):
         return Sensor.objects.filter(user=self.request.user)
 

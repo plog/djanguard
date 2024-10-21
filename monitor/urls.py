@@ -24,13 +24,13 @@ router.register(r'test-results', views.TestResultViewSet, basename='test-result'
 
 urlpatterns = [
     # API
-    path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('swagger<format>/', schema_view.without_ui(cache_timeout=0)         , name='schema-json'),
+    path('swagger/'        , schema_view.with_ui('swagger', cache_timeout=0) , name='schema-swagger-ui'),
+    path('redoc/'          , schema_view.with_ui('redoc', cache_timeout=0)   , name='schema-redoc'),
 
     path('api/', include(router.urls)),
-    path('api/action/<int:action_id>/screenshot/', views.ActionScreenshotAPIView.as_view() , name='api_screenshot'),
-    path('api/action/<int:action_id>/run/'       , views.ActionRunNowAPI.as_view()         , name='run_action_now'),
+    path('api/actions/<int:id>/screenshot/', views.ActionScreenshotAPIView.as_view() , name='api_screenshot'),
+    path('api/actions/<int:id>/run/'       , views.ActionRunNowAPI.as_view()         , name='run_action_now'),
 
     # Pages
     path('profile/'        , views.ProfileView.as_view()     , name='profile'),
