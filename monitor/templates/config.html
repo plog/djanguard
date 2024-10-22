@@ -115,8 +115,8 @@
     <div x-show="isActionFormVisible" class="box-content">
         <form @submit.prevent="submitActionForm()">
             <div class="row">
-                <div class="col actionUrl">
-                    <a :href="`${actionForm.sensor ? actionForm.sensor.url+actionForm.action_path : ''}`" x-text="`${actionForm.sensor ? actionForm.sensor.url+actionForm.action_path : ''}`" target="_blank"></a>
+                <div class="col actionUrl" x-show="actionForm.sensor && actionForm.sensor.url">
+                    <a :href="`${actionForm.sensor && actionForm.sensor.url ? actionForm.sensor.url+actionForm.action_path : ''}`" x-text="`${actionForm.sensor ? actionForm.sensor.url+actionForm.action_path : ''}`" target="_blank"></a>
                 </div>
             </div>
             <div class="row">
@@ -515,14 +515,16 @@ const user = parseInt({{request.user.id}});
             },
 
             async submitActionForm() {
-                const csrfToken  = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                const url        = this.actionFormMode === 'edit' ? `/api/actions/${this.actionForm.id}/` : '/api/actions/';
-                const method     = this.actionFormMode === 'edit' ? 'PUT' : 'POST';
+                const csrfToken     = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const url           = this.actionFormMode === 'edit' ? `/api/actions/${this.actionForm.id}/` : '/api/actions/';
+                const method        = this.actionFormMode === 'edit' ? 'PUT' : 'POST';
+                const updated_action = {...this.actionForm};
+                updated_action.sensor = this.selectedSensorId
                 try {
                     const response = await fetch(url, {
                         method: method,
                         headers: {'Content-Type': 'application/json','X-CSRFToken': csrfToken},
-                        body: JSON.stringify(this.actionForm)
+                        body: JSON.stringify(updated_action)
                     });
                     if (response.ok) {
                         this.isActionFormVisible = false;

@@ -20,11 +20,20 @@ class SensorSerializer(serializers.ModelSerializer):
     
 class ActionSerializer(serializers.ModelSerializer):
     latest_test_result = serializers.SerializerMethodField()
-    sensor = SensorSerializer()
     
     class Meta:
         model = Action
         fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If the request method is POST or PUT, use PrimaryKeyRelatedField for the sensor
+        if self.context['request'].method in ['POST', 'PUT']:
+            self.fields['sensor'] = serializers.PrimaryKeyRelatedField(queryset=Sensor.objects.all())
+        # For GET requests, use the full SensorSerializer
+        else:
+            self.fields['sensor'] = SensorSerializer()
 
     def get_latest_test_result(self, obj):
         # Get the latest test result for the action using timestamp

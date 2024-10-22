@@ -250,9 +250,7 @@ class ActionViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(tags=['Actions'])
     def perform_create(self, serializer):
         user_profile = self.request.user.userprofile
-        
         sensor = serializer.validated_data['sensor']
-
         if sensor.user != self.request.user:
             raise PermissionDenied("You do not have permission to add actions to this sensor.")
 
