@@ -10,7 +10,7 @@ admin.site.index_title = "Welcome to Djanguard Monitoring Dashboard"
 @admin.register(Sensor)
 class SensorAdmin(admin.ModelAdmin):
     search_fields = ['name', 'url']
-    list_display  = ['id', 'name', 'url', 'favico', 'frequency', 'get_actions_count']
+    list_display  = ['id', 'name', 'url','user_id', 'frequency', 'get_actions_count']
 
 # Custom Admin for Action Model
 @admin.register(Action)

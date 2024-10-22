@@ -21,12 +21,11 @@ from drf_yasg.utils import swagger_auto_schema
 
 from common.authentication import APIKeyAuthentication
 from rest_framework import serializers, status, viewsets
-from rest_framework.authentication import BaseAuthentication,SessionAuthentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
-from rest_framework.exceptions import AuthenticationFailed,MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.throttling import UserRateThrottle
 
 import logging
 import os
@@ -172,8 +171,9 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 # -------------------  
 class SensorViewSet(viewsets.ModelViewSet):
     authentication_classes = [APIKeyAuthentication, SessionAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class   = SensorSerializer
+    permission_classes     = [IsAuthenticated]
+    serializer_class       = SensorSerializer
+    throttle_classes       = [UserRateThrottle]
     
     @swagger_auto_schema(tags=['Sensors'])
     def get_queryset(self):
@@ -232,8 +232,9 @@ class SensorViewSet(viewsets.ModelViewSet):
 
 class ActionViewSet(viewsets.ModelViewSet):
     authentication_classes = [APIKeyAuthentication, SessionAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class   = ActionSerializer
+    permission_classes     = [IsAuthenticated]
+    serializer_class       = ActionSerializer
+    throttle_classes       = [UserRateThrottle]    
 
     @swagger_auto_schema(tags=['Actions'])
     def get_queryset(self):
@@ -293,7 +294,6 @@ class ActionViewSet(viewsets.ModelViewSet):
             action          = get_object_or_404(Action, pk=pk)
             response        = run_playwright_action(pk)
             response['url'] = action.sensor.url + action.action_path
-            # Check if the current user is allowed to access this action
             if action.sensor.user != request.user:
                 logger.error("You do not have permission to access this action's screenshots.")
                 raise PermissionDenied("You do not have permission to access this action's screenshots.")
@@ -339,9 +339,10 @@ class ActionViewSet(viewsets.ModelViewSet):
 
 class TestResultViewSet(viewsets.ModelViewSet):
     authentication_classes = [APIKeyAuthentication, SessionAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class   = TestResultSerializer
-    http_method_names  = ['get']
+    permission_classes     = [IsAuthenticated]
+    serializer_class       = TestResultSerializer
+    http_method_names      = ['get']
+    throttle_classes       = [UserRateThrottle]
 
     # Add schema information for Swagger documentation
     @swagger_auto_schema(tags=['Test Results'])

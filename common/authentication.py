@@ -9,10 +9,8 @@ class APIKeyAuthentication(BaseAuthentication):
     def authenticate(self, request):
         # Get the Authorization header from the request
         auth_header = request.headers.get('Authorization')
-
         if not auth_header:
             return None
-
         # Split the header, making "Bearer" optional
         try:
             parts = auth_header.split()
@@ -24,7 +22,6 @@ class APIKeyAuthentication(BaseAuthentication):
                 raise AuthenticationFailed("Invalid token header")
         except ValueError:
             raise AuthenticationFailed("Invalid token header")
-
         # Try to retrieve the UserKey from the database
         try:
             user_key = UserKey.objects.get(key=key)

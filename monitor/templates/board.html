@@ -2,7 +2,10 @@
 {% load static %}
 
 {% block content %}
-<h1 class="mb-4">Sensors Dashboard</h1>
+<h1 class="mb-4">
+    Sensors Dashboard
+    <!-- <a href="{% url 'web_config' %}"><button class="btn btn-primary"><i class="bi bi-arrow-right-square-fill"></i>&nbsp;Config</button></a> -->
+</h1>
 
 
 <div class="container my-4" x-data="sensorDashboard()">
@@ -28,13 +31,13 @@
                         <h5>
                             <img :src="sensor.favico ? sensor.favico : '/static/img/default-favicon.ico'" height="15">
                             <span x-text="sensor.name"></span>&nbsp;
-                            <a :href="`/config/#${sensor.id}`"><i class="bi bi-pencil-square"></i></a>
+                            <a :href="`/config/#${sensor.id}-`"><i class="bi bi-pencil-square"></i></a>
                         </h5>
                     </div>
 
                     <div class="card-body">
                         <p class="card-text">
-                            <a :href="sensor.url" class="sensor_url" x-text="sensor.short_url"></a>
+                            <a :href="sensor.url" class="sensor_url" x-text="sensor.short_url" target="_blank"></a>
                             <span class="frequency" x-text="'(' + sensor.frequency + ' s.)'"></span>
                         </p>
                         <!-- Actions for this sensor -->
@@ -42,7 +45,10 @@
                             <div class="action-graph">
                                 <h3 class="board">
                                     <span x-text="action.action_name + ' (' + action.action_type + ')'"></span>
-                                    &nbsp;&nbsp;&nbsp;&nbsp;<a href="#" @click.prevent="runTest(action.id)"><i class="bi bi-play-circle-fill text-success"></i></a>
+                                    &nbsp;&nbsp;
+                                    <a href="#" @click.prevent="runTest(action.id)"><i class="bi bi-play-circle-fill text-success"></i></a>
+                                    &nbsp;&nbsp;
+                                    <a :href="`/config/#${sensor.id}-${action.id}`"><i class="bi bi-pencil-square"></i></a>
                                     <div x-show="testResults[action.id]" class="board-test-img">
                                         <img 
                                             x-bind:src="testResults[action.id] ? testResults[action.id].img : '/static/img/pixel.png'" 

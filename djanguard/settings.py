@@ -78,21 +78,17 @@ ALLOWED_HOSTS = [
     'djanguard.com',
     'localhost'
 ]
-
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8014",
     "https://djanguard.com",
 ]
-
 CSRF_TRUSTED_ORIGINS = [
     'chrome-extension://hlgbhaldaijnheibapmhlpladgacnadb',
     'http://127.0.0.1:8010',
     'http://10.11.12.100:8014',
     'https://guardexam.com'
 ]
-
 ROOT_URLCONF = 'djanguard.urls'
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -112,9 +108,7 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = 'djanguard.wsgi.application'
-
 DATABASES = {
     'default': {
         'ENGINE'  : 'django.db.backends.postgresql',
@@ -126,7 +120,6 @@ DATABASES = {
         'CONN_MAX_AGE': 300, 
     }
 }
-
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
@@ -139,7 +132,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
 STATIC_URL         = '/static/'
 STATIC_ROOT        = os.path.join(BASE_DIR, '..','django_djanguard_static')
 DATA_DIR           = os.path.join(BASE_DIR, '..','django_djanguard_data')
@@ -153,9 +145,16 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    )    
+    ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',  # Rate-limiting based on user authentication
+        'rest_framework.throttling.AnonRateThrottle',  # For unauthenticated users (if applicable)
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '200/second',  # Allow 1 request per second per user
+        'anon': '500/minute',  # Allow 10 requests per minute for anonymous users (adjust as needed)
+    }    
 }
-
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': True,
     'SECURITY_DEFINITIONS': {
@@ -170,68 +169,6 @@ SWAGGER_SETTINGS = {
 }
 log_level = 'INFO'
 log_size = 2
-
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'formatters': {
-#         'verbose': {
-#             'format': '{levelname} {asctime} {module} {message}',
-#             'style': '{',
-#         }
-#     },
-#     'handlers': {
-#         'file_general': {
-#             'level'      : log_level,
-#             'class'      : 'logging.handlers.RotatingFileHandler',
-#             'filename'   : os.path.join(BASE_DIR, 'logs','django_general.log'),
-#             'maxBytes'   : 1024*1024*log_size,
-#             'backupCount': 5,
-#             'formatter'  : 'verbose',
-#         },
-#         'file_country_restriction': {
-#             'level'      : log_level,
-#             'class'      : 'logging.handlers.RotatingFileHandler',
-#             'filename'   : os.path.join(BASE_DIR,'logs','country_restriction.log'),
-#             'maxBytes'   : 1024*1024*log_size,
-#             'backupCount': 5,
-#             'formatter'  : 'verbose',
-#         },      
-#         'file_errors': {
-#             'level'      : log_level,
-#             'class'      : 'logging.handlers.RotatingFileHandler',
-#             'filename'   : os.path.join(BASE_DIR,'logs','django_errors.log'),
-#             'maxBytes'   : 1024*1024*log_size,
-#             'backupCount': 5,
-#             'formatter'  : 'verbose',
-#         }, 
-#         'celery': {
-#             'level'      : log_level,
-#             'class'      : 'logging.handlers.RotatingFileHandler',
-#             'filename'   : os.path.join(BASE_DIR,'logs','celery_process.log'),
-#             'maxBytes'   : 1024*1024*log_size, 
-#             'backupCount': 5,
-#             'formatter'  : 'verbose',
-#         },         
-#     },
-#     'loggers': {
-#         'django': {
-#             'handlers': ['file_general'],
-#             'level': log_level,
-#             'propagate': False,
-#         },
-#         'country_restriction': {
-#             'handlers': ['file_country_restriction'],
-#             'level': log_level,
-#             'propagate': False,
-#         },
-#         'celery_process': {
-#             'handlers': ['celery'],
-#             'level': log_level,
-#             'propagate': False,
-#         },
-#     },
-# }
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

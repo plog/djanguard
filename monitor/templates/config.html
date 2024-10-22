@@ -13,7 +13,7 @@
 </script>
 
 <h1 class="mb-2">
-    <a href="{% url 'web_board' %}"><i class="bi bi-arrow-left-square-fill"></i></a>
+    <!-- <a href="{% url 'web_board' %}"><button class="btn btn-primary"><i class="bi bi-arrow-left-square-fill"></i>&nbsp;Board</button></a> -->
     Sensors Config
 </h1>
 
@@ -221,18 +221,19 @@ const user = parseInt({{request.user.id}});
 
             async init() {
                 this.updateHash(window.location.hash);
-                window.addEventListener('hashchange', () => {
-                    this.updateHash(window.location.hash);
-                });                                
+                window.addEventListener('SensorHashchange', () => {this.updateHash(window.location.hash);});                                
             },
 
             updateHash(hash) {
-                // Remove the '#' from the hash and store it in `selectedId`
                 if (hash) {
-                    this.selectedId = hash.substring(1); // Remove '#' to get just the ID
-                } else {
-                    this.selectedId = null; // Reset if there's no hash
+                    let url_hash = hash.substring(1).split('-');
+                    if(url_hash[0]){
+                        this.selectedId = url_hash[0];
+                        return
+                    }
                 }
+                this.selectedId = null; // Reset if there's no hash
+                return
             },
 
             async fetchSensors() {
@@ -364,6 +365,7 @@ const user = parseInt({{request.user.id}});
             testResults: {},
             selectedSensorName: '',  // From sensorData(): To store the selected sensor's name
             selectedSensorId: null,  // From sensorData(): To store the selected sensor's ID 
+            selectedActionId: null,  
             expectedValueText: 'Expected value:',
             
             // Visibility flags for the form fields
@@ -430,7 +432,6 @@ const user = parseInt({{request.user.id}});
                                 action.img = "/static/img/pixel.png";
                             }
                             action.runTest = false;
-                            console.log(action)
                             return action;
                         });                        
                     } else {
@@ -447,9 +448,9 @@ const user = parseInt({{request.user.id}});
 
             init() {
                 // Listen for the custom event and fetch actions based on the selected sensor
-                window.addEventListener('sensor-selected', (event) => {
+                window.addEventListener('sensor-selected', async (event) => {
                     this.clearActions();
-                    this.fetchActions(event.detail.sensorId);
+                    await this.fetchActions(event.detail.sensorId);
                     this.updateVisibilityFlags();
                     this.actionForm.sensor   = event.detail.sensorId;
                     this.selectedSensorId    = event.detail.sensorId;
@@ -462,7 +463,25 @@ const user = parseInt({{request.user.id}});
                     this.actionForm.sensor   = null;
                     this.selectedSensorId    = null;
                     this.selectedSensorName  = null;                
-                });                
+                });
+                this.updateHash(window.location.hash);
+                window.addEventListener('SensorHashchange', () => {this.updateHash(window.location.hash);});                                
+            },
+
+            async updateHash(hash) {
+                if (hash) {
+                    let url_hash = hash.substring(1).split('-');
+                    if(url_hash[0] && url_hash[1]){
+                        await this.fetchActions(url_hash[0]); //Get the sensor fomr URL first
+                        this.selectedActionId = url_hash[1];
+                        setTimeout(() => {
+                            this.editAction(this.selectedActionId)   
+                        }, 500);
+                        return
+                    }
+                }
+                this.selectedId = null; // Reset if there's no hash
+                return
             },
 
             showAddActionForm() {
@@ -476,9 +495,19 @@ const user = parseInt({{request.user.id}});
             editAction(action) {
                 this.errors              = {};
                 this.actionFormMode      = 'edit';
-                this.actionForm          = { ...action };
                 this.isActionFormVisible = true;
                 this.updateVisibilityFlags();
+
+                if(!action.id){
+                    // the action ID is passed
+                    const element = this.actions.find(act => parseInt(act.id) === parseInt(action));
+                    console.log("the action ID is passed",element)
+                    this.actionForm  = { ...element };
+                }else{
+                    // the action object is passed
+                    console.log("the action object is passed",action)
+                    this.actionForm  = { ...action };
+                }
             },
 
             cancelActionForm() {
@@ -523,7 +552,7 @@ const user = parseInt({{request.user.id}});
                     });
                     if (response.ok) {
                         this.clearActions();
-                        this.fetchActions(this.selectedSensorId)
+                        await this.fetchActions(this.selectedSensorId)
                     } else {
                         console.error('Failed to delete action', response.statusText);
                     }
