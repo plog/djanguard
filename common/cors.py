@@ -17,16 +17,16 @@ class DynamicCORSMiddleware(MiddlewareMixin):
 
         # Check if the origin is in settings.CORS_ALLOWED_ORIGINS
         if origin in getattr(settings, 'CORS_ALLOWED_ORIGINS', []):
-            response['Access-Control-Allow-Origin']  = origin
-            response['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, DELETE'
-            response['Access-Control-Allow-Headers'] = 'Authorization, X-CSRFToken, Content-Type'
+            response['Access-Control-Allow-Origin']      = origin
+            response['Access-Control-Allow-Methods']     = 'GET, POST, OPTIONS, DELETE'
+            response['Access-Control-Allow-Headers']     = 'Authorization, X-CSRFToken, Content-Type'
             response['Access-Control-Allow-Credentials'] = 'true'
 
         elif origin and origin.startswith('chrome-extension://'):
             # Allow chrome extensions
-            response['Access-Control-Allow-Origin'] = origin
-            response['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, DELETE'
-            response['Access-Control-Allow-Headers'] = 'Authorization, X-CSRFToken, Content-Type'
+            response['Access-Control-Allow-Origin']      = origin
+            response['Access-Control-Allow-Methods']     = 'GET, POST, OPTIONS, DELETE'
+            response['Access-Control-Allow-Headers']     = 'Authorization, X-CSRFToken, Content-Type'
             response['Access-Control-Allow-Credentials'] = 'true'
         
         else:

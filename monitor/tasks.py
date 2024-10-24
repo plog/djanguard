@@ -1,4 +1,4 @@
-from .models import Action, TestResult, Sensor
+from .models import Action, TestResult, Sensor, UserProfile
 from .selenium_dsl import DSLExecutor
 from .serializers import TestResultSerializer
 from asgiref.sync import sync_to_async
@@ -8,7 +8,8 @@ from celery.schedules import timedelta
 from django_celery_results.models import TaskResult
 from django.conf import settings
 from django.utils import timezone
-from playwright.async_api import async_playwright
+from django.db.models import Q
+
 
 import aiohttp
 import asyncio
@@ -19,6 +20,42 @@ import re
 import traceback
 
 logger = logging.getLogger('celery_process')
+
+def should_send_notification(current_test_result):
+    # Fetch the last test result for the same action before the current one
+    previous_test_result = TestResult.objects.filter(
+        action=current_test_result.action,
+        timestamp__lt=current_test_result.timestamp
+    ).order_by('-timestamp').first()
+    # Determine the failure state of the current test result
+    current_failed = (
+        current_test_result.expected_value != current_test_result.actual_value or 
+        current_test_result.actual_value == 'fail'
+    )
+    # If no previous test result exists, this is the first test, so notify if it fails
+    if not previous_test_result:
+        return current_failed
+    
+    # Determine the failure state of the previous test result
+    previous_failed = (
+        previous_test_result.expected_value != previous_test_result.actual_value or 
+        previous_test_result.actual_value == 'fail'
+    )
+    
+    # Send notification if:
+    # 1. The failure status has changed (current_failed != previous_failed)
+    # 2. The actual_value is different from the previous actual_value
+    return current_failed != previous_failed or current_test_result.actual_value != previous_test_result.actual_value
+
+# Async function to send a message via Telegram using aiohttp
+async def send_telegram_message(bot_token, chat_ids, message):
+    telegram_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    async with aiohttp.ClientSession() as session:
+        for chat_id in chat_ids:
+            payload = {'chat_id': chat_id,'text': message}
+            async with session.post(telegram_url, json=payload) as response:
+                if response.status != 200:
+                    print(f"Failed to send message to chat_id: {chat_id}. Status: {response.status}")
 
 async def get_favicon(url):
     try:
@@ -79,7 +116,6 @@ def schedule_sensor_actions(self):
         logger.info(f'PROCESSING SENSOR >{sensor.name}< - {threshold} seconds')
         for action in actions:
             # Schedule the task to run Playwright for this action
-            logger.info(f'GO RUN -->> {action.action_name} <<--')
             processed.append(action.id)
             run_playwright_action.delay(action.id)
             action.last_execution = timezone.now()
@@ -88,9 +124,23 @@ def schedule_sensor_actions(self):
 
 @shared_task(bind=True)
 def run_playwright_action(self, action_id):
-    loop = asyncio.get_event_loop()
-    result = loop.run_until_complete(async_run_playwright_action(action_id))
-    return result
+    loop        = asyncio.get_event_loop()
+    test_result = loop.run_until_complete(async_run_playwright_action(action_id))
+    logger.info(f"test_result --------- {test_result}")
+    
+    test_result_db = TestResult.objects.get(id=test_result['id'])
+    if should_send_notification(test_result_db):
+        # Check if test failed
+        if test_result_db.expected_value != test_result_db.actual_value or test_result_db.actual_value == 'fail':
+            # Get the user profile related to the action's sensor's user
+            user_profile = UserProfile.objects.get(user=test_result_db.action.sensor.user)
+            # Prepare the message
+            message = f"Test failed for {test_result_db.action.action_name}.\nExpected: {test_result_db.expected_value}\nActual: {test_result_db.actual_value}"
+            # Send notification only if there are chat_ids available in the user profile
+            if user_profile.telegram_chat_ids:
+                loop.run_until_complete(send_telegram_message(settings.BOT_TOKEN, user_profile.telegram_chat_ids, message))
+
+    return test_result
 
 async def async_run_playwright_action(action_id):
     # Fetch the action from the database using sync_to_async to avoid async context issue
@@ -114,8 +164,11 @@ async def async_run_playwright_action(action_id):
         )        
         try:
             async with aiohttp.ClientSession() as session:
-                headers = json.loads(action.payload).get('headers', {}) if action.payload else {}
-                data    = json.loads(action.payload).get('data'   , {}) if action.payload else {}
+                headers = None
+                data    = None
+                if action.payload:
+                    headers = json.loads(action.payload).get('headers', {}) if action.payload else {}
+                    data    = json.loads(action.payload).get('data'   , {}) if action.payload else {}
                 async with session.request(method=action.action_type, url=action.sensor.url + action.action_path, headers=headers, json=data) as response:
                     if action.assertion_type =='contains_keyword':
                         response_text = await response.text()
@@ -162,5 +215,5 @@ async def async_run_playwright_action(action_id):
 
     # Serialize the TestResult to return a dictionary representation
     serializer = TestResultSerializer(test_result)
-    logger.info(serializer.data)
     return serializer.data
+

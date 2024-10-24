@@ -8,6 +8,7 @@ import os
 BASE_DIR                                  = Path(__file__).resolve().parent.parent
 ADMIN_URL                                 = config('ADMIN_URL')
 APP_NAME                                  = config('APP_NAME')
+BOT_TOKEN                                 = config('BOT_TOKEN')
 DEBUG                                     = config('DEBUG', default=False, cast=bool)
 LOGIN_REDIRECT_URL                        = '/config/'
 LOGOUT_REDIRECT_URL                       = LOGIN_REDIRECT_URL
@@ -180,7 +181,7 @@ LOGGING = {
     },
     'handlers': {
         'gelf': {
-            'level': 'DEBUG',  # Set your desired level
+            'level': log_level,  # Set your desired level
             'class': 'graypy.GELFUDPHandler',
             'host': 'graylog',  # Replace with Graylog server IP or hostname
             'port': 12201,
@@ -190,17 +191,17 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['gelf'],
-            'level': 'DEBUG',
+            'level': log_level,
             'propagate': False,
         },
         'django.country_restriction': {
             'handlers': ['gelf'],
-            'level': 'DEBUG',
+            'level': log_level,
             'propagate': False,
         },
         'celery_process': {
             'handlers': ['gelf'],
-            'level': 'DEBUG',
+            'level': log_level,
             'propagate': False,
         },
     },

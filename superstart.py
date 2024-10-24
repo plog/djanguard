@@ -26,7 +26,6 @@ MANAGE_PY_CMD       = ['python', 'manage.py']
 NGINX_CMD           = ['/usr/sbin/nginx']
 NGINX_CONF_TEMPLATE = '/app/config/djanguard_nginx.conf'
 NGINX_CONF_PATH     = '/etc/nginx/conf.d/default.conf'
-LOGS_PATH           = '/app/logs/'  # Path to the logs directory
 APP_NAME            = os.getenv('APP_NAME')
 
 # Set up the logger

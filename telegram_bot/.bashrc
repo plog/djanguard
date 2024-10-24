@@ -1,0 +1,10 @@
+alias ll='ls -lha'
+alias l='ls -lha'
+alias h='history 1'
+alias j='jobs -l'
+alias c='sudo dscacheutil -flushcache ; sudo killall -HUP mDNSResponder'
+alias mm="python manage.py makemigrations"
+alias mi="python manage.py migrate"
+alias mc="python manage.py createsuperuser"
+alias mr="python manage.py runserver"
+alias ports='netstats -tulp'

@@ -10,4 +10,7 @@ class UserForm(forms.ModelForm):
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = []  # We are not allowing edits, just displaying data
+        fields = ['telegram_chat_ids']
+        widgets = {
+            'telegram_chat_ids': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'cols': 10})  # Limit to 5 rows
+        }

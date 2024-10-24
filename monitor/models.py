@@ -68,8 +68,13 @@ class TestResult(models.Model):
         return f"{self.test_type} test for action '{self.action.action_name}' at {self.timestamp}"
 
 class UserProfile(models.Model):
-    user           = models.OneToOneField(User, on_delete=models.CASCADE)
-    is_paying_user = models.BooleanField(default=False)
+    user                    = models.OneToOneField(User, on_delete=models.CASCADE)
+    is_paying_user          = models.BooleanField(default=False)
+    telegram_chat_ids       = models.JSONField(default=list) 
+    notify_status_code      = models.BooleanField(default=True)
+    notify_contains_keyword = models.BooleanField(default=True)
+    notify_selenium         = models.BooleanField(default=True)
+    notify_screenshot       = models.BooleanField(default=True)   
 
     def __str__(self):
         return f"{self.user.username} Profile"

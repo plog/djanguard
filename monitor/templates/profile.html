@@ -23,18 +23,49 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
+                        <input type="hidden" name="form_type" value="user_form"> 
                         <div class="row g-3 mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-5">
                                 <label for="first_name" class="form-label">First Name</label>
                                 {{ user_form.first_name|addclass:"form-control" }}
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-5">
                                 <label for="last_name" class="form-label">Last Name</label>
                                 {{ user_form.last_name|addclass:"form-control" }}
                             </div>
+                            <div class="col-md-2 pt-4">
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+
+            
+            <!-- Telegram -->
+            <div class="box2 mb-4">
+                <h2 class="mb-0">Telegram Notification</h2>
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" name="form_type" value="profile_form">
+                        {% csrf_token %}
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-10">
+                                <label for="first_name" class="form-label">Chat ID's</label>
+                                {{ profile_form.telegram_chat_ids }}
+                                <p style="font-size: 0.6rem; line-height: 15px;">
+                                    You can have as many ID as necessery including people or groups
+                                    <br>Ex. [456108080, 123108080, -4548014328].
+                                    <br>Chat with <a href="https://t.me/djanguardBot?start=Hi" target="_blank">the Bot</a> (or inlude it in a group) to get your ID's
+                                </p>
+                            </div>
+                            <div class="col">
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -42,25 +73,32 @@
 
             <div class="box2 mb-4">
                 <h2>Your API Keys</h2>
-                <ul>
+                <div class="row p-2">
                     {% for key in user_keys %}
-                        <li>
-                            <strong>{{ key.key }}</strong><br>
-                             Created at: {{ key.created_at }}
-                            <form method="post" action="{% url 'profile' %}" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="delete_key" value="{{ key.id }}">
-                                <button type="submit" class="btn btn-danger btn-sm">Delete Key</button>
-                            </form>
-                        </li>
+                        <div class="row pb-1">
+                            <div class="col-9 ps-4">
+                                <strong style="font-size:0.7rem">{{ key.key }}</strong>
+                            </div>
+                            <div class="col d-flex justify-content-end pe-1">
+                                <form method="post" action="{% url 'profile' %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="delete_key" value="{{ key.id }}">
+                                    <button type="submit" class="btn btn-danger btn-sm" style="font-size: 0.7rem;">Delete</button>
+                                </form>
+                            </div>
+                        </div>
                     {% endfor %}
-                </ul>
+                    <div class="row p-1">
+                        <div class="d-flex justify-content-end">
+                            <form method="post" action="{% url 'profile' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="generate_key" value="1">
+                                <button type="submit" class="btn btn-sm btn-primary">New</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
                 
-                <form method="post" action="{% url 'profile' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="generate_key" value="1">
-                    <button type="submit" class="btn btn-primary">Generate New Key</button>
-                </form>
             </div>
 
             <h1>How to Use Your API Key</h1>

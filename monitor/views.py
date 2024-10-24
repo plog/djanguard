@@ -121,31 +121,40 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         profile_form          = UserProfileForm(instance=user_profile)
         user_keys             = UserKey.objects.filter(user=request.user) 
         return self.render_to_response(self.get_context_data(
-            user_form=user_form, 
-            profile_form=profile_form,
-            user_keys=user_keys
-            ))
+            user_form    = user_form, 
+            profile_form = profile_form,
+            user_keys    = user_keys
+        ))
 
     def post(self, request, *args, **kwargs):
+        user_profile = get_object_or_404(UserProfile, user=request.user)
+        
         if 'generate_key' in request.POST:
             return self.generate_key(request)
         elif 'delete_key' in request.POST:
             return self.delete_key(request)
                 
-        user_profile = get_object_or_404(UserProfile, user=request.user)
-        user_form = UserForm(request.POST, instance=request.user)
+        form_type = request.POST.get('form_type')
+        if form_type == 'user_form':
+            user_form = UserForm(request.POST, instance=request.user)
+            profile_form = UserProfileForm(instance=user_profile)  # Keep the current profile form instance
+            if user_form.is_valid():
+                user_form.save()
+                return redirect('web_board')  # Redirect after saving
+        elif form_type == 'profile_form':
+            user_form = UserForm(instance=request.user)  # Keep the current user form instance
+            profile_form = UserProfileForm(request.POST, instance=user_profile)
+            if profile_form.is_valid():
+                profile_form.save()
+                return redirect('web_board')  # Redirect after saving
 
-        if user_form.is_valid():
-            user_form.save()
-            return redirect('web_board')
-
-        profile_form = UserProfileForm(instance=user_profile)
+        # If neither form is valid, re-render the forms with the current instances
         user_keys = UserKey.objects.filter(user=request.user)
         return self.render_to_response(self.get_context_data(
             user_form=user_form, 
             profile_form=profile_form,
             user_keys=user_keys
-            ))
+        ))
 
     def generate_key(self, request):
         # Generate a new key for the user

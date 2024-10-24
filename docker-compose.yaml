@@ -66,6 +66,14 @@ services:
     networks:
       - default
 
+  telegram_bot:
+    build:
+      context: ./telegram_bot
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - default
+
 volumes:
   pgdatadjanguard:
   django_djanguard_static:

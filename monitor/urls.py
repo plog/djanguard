@@ -22,7 +22,6 @@ router.register(r'sensors'     , views.SensorViewSet    , basename='sensor')
 router.register(r'actions'     , views.ActionViewSet    , basename='action')
 router.register(r'test-results', views.TestResultViewSet, basename='test-result')
 
-
 urlpatterns = [
     # API
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0)         , name='schema-json'),

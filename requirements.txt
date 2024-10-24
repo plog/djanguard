@@ -16,6 +16,8 @@ django-ratelimit
 django-rosetta
 djangorestframework
 drf-yasg
+flask
+telethon
 geoip2
 google-api-python-client
 graypy
