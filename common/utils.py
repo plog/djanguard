@@ -5,7 +5,6 @@ from logging.handlers import RotatingFileHandler
 import gzip
 import logging
 import os
-import os
 
 logger = logging.getLogger('django')
 DATA_DIR       = settings.DATA_DIR

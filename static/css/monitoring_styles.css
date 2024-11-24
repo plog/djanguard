@@ -274,3 +274,7 @@ nav{
 .actionUrl{
     font-size: 0.8rem;
 }
+
+.swagger-ui *{
+    font-size: 90%;
+}

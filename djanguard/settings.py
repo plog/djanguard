@@ -17,7 +17,7 @@ GOOGLE_OAUTH_CLIENT_ID                    = config('GOOGLE_OAUTH_CLIENT_ID')
 AUTHENTICATION_BACKENDS                   = ['django.contrib.auth.backends.ModelBackend']
 SECURE_REFERRER_POLICY                    = 'no-referrer-when-downgrade'
 SECURE_CROSS_ORIGIN_OPENER_POLICY         = "same-origin-allow-popups"
-SECRET_KEY                                = 'django-insecure-z*ypnwid#cw-(*u7w4b684p$!&f9h83=j1&8v2tidz6-9+7q59'
+SECRET_KEY                                = config('SECRET_KEY')
 CELERY_BROKER_URL                         = config('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND                     = config('CELERY_BROKER_URL')
 CELERY_ACCEPT_CONTENT                     = ['json']

@@ -19,3 +19,6 @@ nav{
 .swagger-ui .topbar {
     display: none;
 }
+#swagger-ui *{
+    zoom: 0.99;
+}
